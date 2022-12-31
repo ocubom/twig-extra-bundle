@@ -74,6 +74,13 @@ following command to download the latest stable version of this bundle:
 $ composer require ocubom/twig-extra-bundle
 ```
 
+You must also install the Twig extensions to be used:
+
+```console
+$ composer require ocubom/twig-html-extension
+$ composer require ocubom/twig-svg-extension
+```
+
 ##### Step 2: Enable the Bundle
 
 Then, enable the bundle by adding it to the list of registered bundles
@@ -99,13 +106,50 @@ bin/console config:dump-reference ocubom_twig_extra
 You can use the [example configuration][] provided.
 
 ```yaml
-ocubom_twig_extra: ~
+ocubom_twig_extra:
+
+    # Twig HTML Extension
+    html:
+        enabled: true
+        compression:
+            # Force compression?
+            force: false
+            # The level of compression to use
+            level: smallest # One of "none"; "fastest"; "normal"; "smallest"
+
+    # Twig SVG Extension
+    svg:
+        enabled: true
+        # The paths where the SVG files will be searched for.
+        search_path:
+            - "%kernel.project_dir%/assets"
+            - "%kernel.project_dir%/node_modules"
+
+    # HTTP Headers extract
+    # The listener is only registered if some header is registered
+    #http_headers:
+    #    # Duplicate robots meta as X-Robots-Tag
+    #    # @see https://developers.google.com/search/docs/advanced/robots/robots_meta_tag#xrobotstag
+    #    -   name:    'X-Robots-Tag'
+    #        pattern: '@[\p{Zs}]*<meta\s+(?:name="robots"\s+content="([^"]+)"|content="([^"]+)"\s+name="robots")\s*/?\s*>\p{Zs}*\n?@i'
+    #        value:   '%2$s'
+    #        replace: '%1$s'
+    #        formats:
+    #            - 'text/html'
+    #
+    #    # Disable Metro Interface
+    #    # @see https://github.com/h5bp/html5-boilerplate/blob/5.3.0/dist/doc/extend.md#prompt-users-to-switch-to-desktop-mode-in-ie10-metro
+    #    -   name:    'X-UA-Compatible'
+    #        enabled: true
+    #        pattern: '@[\p{Zs}]*<meta\s+(?:http-equiv="X-UA-Compatible"\s+content="([^"]+)"|content="([^"]+)"\s+http-equiv="X-UA-Compatible")\s*>\p{Zs}*\n?@i'
+    #        value:   '%2$s'
+    #        replace: '' # Delete the meta tag as is not standard
+    #        formats:
+    #            - 'text/html'
 ```
 
 > **Note**
 > This configuration will be installed if your project uses [endroid/installer][]
-
-_For more examples, please refer to the [Documentation][]._
 
 ## Roadmap
 

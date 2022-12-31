@@ -1,0 +1,11 @@
+--TEST--
+no rules
+--RESPONSE--
+<html lang="en">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noodp,notranslate,noimageindex" />
+<meta http-equiv="X-UA-Compatible" content="ie=edge,requiresActiveX=true">
+</html>
+--DATA--
+return []
+--EXPECT--
+Controller app homepage icons no-Icons no-js no-testing100 testing100 testing20
