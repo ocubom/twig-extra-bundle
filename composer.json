@@ -1,0 +1,52 @@
+{
+    "name": "ocubom/twig-extra-bundle",
+    "type": "symfony-bundle",
+    "description": "A Symfony bundle for custom extra Twig extensions",
+    "keywords": [
+        "symfony",
+        "symfony-bundle",
+        "ocubom",
+        "twig",
+        "extra",
+        "bundle",
+        "html",
+        "minify",
+        "compress",
+        "svg"
+    ],
+    "homepage": "https://ocubom.github.io",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Oscar Cubo Medina",
+            "homepage": "https://ocubom.github.io"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Ocubom\\TwigExtraBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ocubom\\TwigExtraBundle\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "symfony/http-kernel": "^5.4|^6.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.4|^3.9",
+        "symfony/phpunit-bridge": "^6.1"
+    },
+    "scripts": {
+        "fix": "./vendor/bin/php-cs-fixer fix",
+        "test": "./vendor/bin/simple-phpunit"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": true
+        },
+        "sort-packages": true
+    }
+}
