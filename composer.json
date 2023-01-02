@@ -39,9 +39,9 @@
         "symfony/twig-bundle": "^5.4|^6.0"
     },
     "require-dev": {
-        "ocubom/twig-svg-extension": "^1.0",
-        "ocubom/twig-html-extension": "^1.0|^2.0",
         "friendsofphp/php-cs-fixer": "^3.4|^3.9",
+        "ocubom/twig-html-extension": "^1.0|^2.0",
+        "ocubom/twig-svg-extension": "^1.0",
         "symfony/phpunit-bridge": "^6.1"
     },
     "scripts": {

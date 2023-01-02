@@ -31,8 +31,8 @@ final class Extensions
             'class' => SvgExtension::class,
             'class_name' => 'OcubomSvgExtension',
             'package' => 'ocubom/twig-svg-extension',
-            'filters' => ['svg_symbols'],
-            'functions' => [],
+            'filters' => ['svg_symbols', 'fontawesome'],
+            'functions' => ['fa'],
         ],
     ];
 

@@ -16,6 +16,7 @@ use Ocubom\Twig\Extension\HtmlCompressRuntime;
 use Ocubom\Twig\Extension\HtmlExtension;
 use Ocubom\Twig\Extension\Svg\Finder;
 use Ocubom\Twig\Extension\Svg\FinderInterface;
+use Ocubom\Twig\Extension\Svg\Library\FontAwesomeRuntime;
 use Ocubom\Twig\Extension\SvgExtension;
 use Ocubom\Twig\Extension\SvgRuntime;
 use Ocubom\TwigExtraBundle\Extensions;
@@ -63,20 +64,56 @@ class OcubomTwigExtraExtension extends Extension
     private function registerTwigSvgExtension(ContainerBuilder $container, array $config): void
     {
         if ($config['enabled']) {
-            $container->register('ocubom_twig_extra.extension.svg', SvgExtension::class)
+            $container
+                ->register(
+                    'ocubom_twig_extra.extension.svg',
+                    SvgExtension::class
+                )
                 ->addTag('twig.extension');
 
-            $container->register('ocubom_twig_extra.runtime.svg', SvgRuntime::class)
+            $container
+                ->register(
+                    'ocubom_twig_extra.runtime.svg',
+                    SvgRuntime::class
+                )
                 ->setArguments([
                     new Reference('ocubom_twig_extra.service.svg_finder'),
                     new Reference('logger'),
                 ])
                 ->addTag('twig.runtime');
 
-            $container->register('ocubom_twig_extra.service.svg_finder', Finder::class)
+            $container
+                ->register(
+                    'ocubom_twig_extra.runtime.svg_fontawesome',
+                    FontAwesomeRuntime::class
+                )
+                ->setArguments([
+                    new Reference('ocubom_twig_extra.service.svg_fontawesome_finder'),
+                    new Reference('logger'),
+                ])
+                ->addTag('twig.runtime');
+
+            $container
+                ->register(
+                    'ocubom_twig_extra.service.svg_finder',
+                    Finder::class
+                )
                 ->setArguments($config['search_path']);
 
-            $container->setAlias(FinderInterface::class, 'ocubom_twig_extra.service.svg_finder');
+            $container
+                ->register(
+                    'ocubom_twig_extra.service.svg_fontawesome_finder',
+                    \Ocubom\Twig\Extension\Svg\Library\FontAwesome\Finder::class
+                )
+                ->setArguments([
+                    new Reference('ocubom_twig_extra.service.svg_finder'),
+                    new Reference('logger'),
+                ]);
+
+            $container->setAlias(
+                FinderInterface::class,
+                'ocubom_twig_extra.service.svg_finder'
+            );
         }
     }
 

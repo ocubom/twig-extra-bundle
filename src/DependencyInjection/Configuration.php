@@ -52,7 +52,7 @@ class Configuration implements ConfigurationInterface
                     ->{$canBeDisabled ? 'canBeDisabled' : 'canBeEnabled'}();
     }
 
-    private function addHttpHeaderSection(NodeDefinition $root): void
+    private function addHttpHeaderSection(ArrayNodeDefinition $root): void
     {
         $root
             ->fixXmlConfig('http_header')
@@ -63,7 +63,6 @@ class Configuration implements ConfigurationInterface
                         'The listener will only be registered if at least one rule is enabled.',
                     ]))
                     ->prototype('array')
-                        ->fixXmlConfig('header')
                         ->treatFalseLike(['enabled' => false])
                         ->treatTrueLike(['enabled' => true])
                         ->treatNullLike(['enabled' => true])
@@ -123,7 +122,12 @@ class Configuration implements ConfigurationInterface
                         ->enumNode('level')
                             ->info('The level of compression to use')
                             ->defaultValue('smallest')
-                            ->values(['none', 'fastest', 'normal', 'smallest'])
+                            ->values([
+                                'none',
+                                'fastest',
+                                'normal',
+                                'smallest',
+                            ])
                         ->end()
                     ->end()
                 ->end()
@@ -136,12 +140,35 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->arrayNode('search_path')
                     ->info('The paths where the SVG files will be searched for.')
-                    ->example('["%kernel.project_dir%/assets", "%kernel.project_dir%/node_modules/"]')
+                    ->example(sprintf('["%s"]', implode('", "', [
+                        '%kernel.project_dir%/assets',
+                        '%kernel.project_dir%/node_modules',
+                    ])))
                     ->defaultValue([
                         '%kernel.project_dir%/assets',
                         '%kernel.project_dir%/node_modules',
                     ])
                     ->prototype('scalar')
+                    ->end()
+                ->end()
+                ->arrayNode('fontawesome')
+                    ->info('Configuration for FontAwesome.')
+                    ->children()
+                        ->arrayNode('search_path')
+                            ->info(implode("\n", [
+                                'The paths where the FontAwesome files will be searched for.',
+                                'If not set the global search_path will be used.',
+                            ]))
+                            ->example(sprintf('["%s"]', implode('", "', [
+                                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs',
+                                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs',
+                            ])))
+                            ->defaultValue([
+                                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs',
+                                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs',
+                            ])
+                            ->prototype('scalar')
+                        ->end()
                     ->end()
                 ->end()
             ->end();
