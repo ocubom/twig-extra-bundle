@@ -79,6 +79,10 @@ class OcubomTwigExtraExtension extends Extension
 
     private function loadSvg(ContainerBuilder $container, array $config): void
     {
+        if (empty($config['finders'])) {
+            return;
+        }
+
         $container
             ->register('ocubom_twig_extra.twig_svg_extension', SvgExtension::class)
             ->addTag('twig.extension');
