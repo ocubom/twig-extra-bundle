@@ -2,31 +2,36 @@ ocubom_twig_extra:
 
     # Twig HTML Extension
     html:
+
+        # Enable or disable this extension
         enabled: true
 
+        # Compress HTML output
         compression:
-            # Force compression?
+            # Force compression
             force: false
             # The level of compression to use
             level: smallest # One of "none"; "fastest"; "normal"; "smallest"
 
     # Twig SVG Extension
     svg:
+
+        # Enable or disable this extension
         enabled: true
 
-        # The paths where the SVG files will be searched for.
-        search_path:
-            - "%kernel.project_dir%/assets"
-            - "%kernel.project_dir%/node_modules"
+        # The paths where SVG files will be searched for.
+        finders:
 
-        # Configuration for FontAwesome.
-        fontawesome:
+            # The default paths where the SVG files will be searched for.
+            default:
+                - '%kernel.project_dir%/assets'
+                - '%kernel.project_dir%/node_modules'
 
             # The paths where the FontAwesome files will be searched for.
-            # If not set the global search_path will be used.
-            search_path:
-                - "%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs"
-                - "%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs"
+            fontawesome:
+                - '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs'
+                - '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs'
+                - '%kernel.project_dir%/vendor/fortawesome/font-awesome/svgs/'
 
     # HTTP Headers extract
     # The listener is only registered if some header is registered

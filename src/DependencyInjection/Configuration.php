@@ -13,7 +13,7 @@ namespace Ocubom\TwigExtraBundle\DependencyInjection;
 
 use Ocubom\TwigExtraBundle\Extensions;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
-use Symfony\Component\Config\Definition\Builder\NodeDefinition;
+use Symfony\Component\Config\Definition\Builder\BooleanNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -26,7 +26,8 @@ class Configuration implements ConfigurationInterface
 
         // Register available extensions
         foreach (Extensions::getClasses() as $name => $class) {
-            $this->{'addTwig'.ucfirst($name).'ExtensionSection'}(
+            $call = str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $name)));
+            $this->{'add'.$call.'Section'}(
                 $this->createSectionNode($root, $name, class_exists($class))
             );
         }
@@ -38,18 +39,25 @@ class Configuration implements ConfigurationInterface
     }
 
     private function createSectionNode(
-        NodeDefinition $root,
+        ArrayNodeDefinition $root,
         string $name,
         bool $canBeDisabled = true
     ): ArrayNodeDefinition {
-        return $root
+        $node = $root
             ->children()
                 ->arrayNode($name)
+                    ->{$canBeDisabled ? 'canBeDisabled' : 'canBeEnabled'}()
                     ->info(sprintf(
                         'Twig %s Extension',
                         ucfirst($name)
-                    ))
-                    ->{$canBeDisabled ? 'canBeDisabled' : 'canBeEnabled'}();
+                    ));
+        assert($node instanceof ArrayNodeDefinition);
+
+        $enabled = $node->find('enabled');
+        assert($enabled instanceof BooleanNodeDefinition);
+        $enabled->info('Enable or disable this extension');
+
+        return $node;
     }
 
     private function addHttpHeaderSection(ArrayNodeDefinition $root): void
@@ -68,7 +76,7 @@ class Configuration implements ConfigurationInterface
                         ->treatNullLike(['enabled' => true])
                         ->children()
                             ->booleanNode('enabled')
-                                ->info('Apply this rule?')
+                                ->info('Enable or disable this rule')
                                 ->defaultTrue()
                             ->end()
                             ->scalarNode('name')
@@ -108,15 +116,16 @@ class Configuration implements ConfigurationInterface
             ->end();
     }
 
-    private function addTwigHtmlExtensionSection(ArrayNodeDefinition $root): void
+    private function addHtmlSection(ArrayNodeDefinition $root): void
     {
         $root
             ->children()
                 ->arrayNode('compression')
+                    ->info('Compress HTML output')
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->booleanNode('force')
-                            ->info('Force compression?')
+                            ->info('Force compression')
                             ->defaultFalse()
                         ->end()
                         ->enumNode('level')
@@ -134,31 +143,97 @@ class Configuration implements ConfigurationInterface
             ->end();
     }
 
-    private function addTwigSvgExtensionSection(ArrayNodeDefinition $root): void
+    private function addSvgSection(ArrayNodeDefinition $root): void
     {
+        $examples = [
+            'default' => [
+                '%kernel.project_dir%/assets',
+                '%kernel.project_dir%/node_modules',
+            ],
+            'fontawesome' => [
+                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs',
+                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs',
+                '%kernel.project_dir%/vendor/fortawesome/font-awesome/svgs/',
+            ],
+        ];
+
+        $finderKeys = array_keys($examples);
+
         $root
+            ->beforeNormalization()
+                ->always(static function ($v) use ($finderKeys) {
+                    // Convert deprecated configuration
+                    $v['finders'] = $v['finders'] ?? [];
+                    foreach ($finderKeys as $key) {
+                        switch ($key) {
+                            case 'default':
+                                $v['finders'][$key] = $v['finders'][$key] ?? $v['search_path'] ?? [];
+                                unset($v['search_path']);
+                                break;
+
+                            case 'fontawesome':
+                                $v['finders'][$key] = $v['finders'][$key] ?? $v['fontawesome']['search_path'] ?? [];
+                                unset($v['fontawesome']);
+                                break;
+                        }
+                    }
+
+                    return $v;
+                })
+            ->end()
+            ->validate()
+                ->always(function ($v) {
+                    // Clean deprecated configuration
+                    unset($v['search_path']);
+
+                    // Disable if no finder are registered
+                    $v['finders'] = array_filter($v['finders'] ?? []);
+                    $v['enabled'] = (0 !== count($v['finders']));
+
+                    return $v;
+                })
+            ->end()
+            ->fixXmlConfig('finder')
             ->children()
-                ->arrayNode('search_path')
-                    ->info('The paths where the SVG files will be searched for.')
-                    ->example(sprintf('["%s"]', implode('", "', [
-                        '%kernel.project_dir%/assets',
-                        '%kernel.project_dir%/node_modules',
-                    ])))
-                    ->defaultValue([
-                        '%kernel.project_dir%/assets',
-                        '%kernel.project_dir%/node_modules',
-                    ])
-                    ->prototype('scalar')
+                ->arrayNode('finders')
+                    ->info('The paths where SVG files will be searched for.')
+                    ->children()
+                        ->arrayNode('default')
+                            ->info('The default paths where the SVG files will be searched for.')
+                            ->example(sprintf('["%s"]', implode('", "', $examples['default'])))
+                            ->defaultValue($examples['default'])
+                            ->prototype('scalar')
+                            ->end()
+                        ->end()
+                        ->arrayNode('fontawesome')
+                            ->info('The paths where the FontAwesome files will be searched for.')
+                            ->example(sprintf('["%s"]', implode('", "', $examples['fontawesome'])))
+                            ->defaultValue($examples['fontawesome'])
+                            ->prototype('scalar')
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
+                ->arrayNode('search_path')
+                    ->setDeprecated(
+                        'ocubom/twig-extra-bundle',
+                        '1.2',
+                        'The "%node%" option is deprecated. Use "finder.svg" instead.'
+                    )
+                    ->info('The paths where the SVG files will be searched for.')
+                    ->example(sprintf('["%s"]', implode('", "', $examples['default'])))
+                    ->prototype('scalar')->end()
+                ->end()
                 ->arrayNode('fontawesome')
+                    ->setDeprecated(
+                        'ocubom/twig-extra-bundle',
+                        '1.2',
+                        'The "%node%" option is deprecated. Use "finder.fontawesome" instead.'
+                    )
                     ->info('Configuration for FontAwesome.')
                     ->children()
                         ->arrayNode('search_path')
-                            ->info(implode("\n", [
-                                'The paths where the FontAwesome files will be searched for.',
-                                'If not set the global search_path will be used.',
-                            ]))
+                            ->info('The paths where the FontAwesome files will be searched for.')
                             ->example(sprintf('["%s"]', implode('", "', [
                                 '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs',
                                 '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs',
@@ -167,7 +242,7 @@ class Configuration implements ConfigurationInterface
                                 '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs',
                                 '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs',
                             ])
-                            ->prototype('scalar')
+                            ->prototype('scalar')->end()
                         ->end()
                     ->end()
                 ->end()

@@ -17,18 +17,18 @@ use Ocubom\TwigExtraBundle\DependencyInjection\OcubomTwigExtraExtension;
 use Ocubom\TwigExtraBundle\Listener\AddHttpHeadersListener;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\ClosureLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 
 class OcubomTwigExtraExtensionTest extends TestCase
 {
     /** @dataProvider provideConfiguration */
-    public function testConfiguration($buildContainer, $expected)
+    public function testConfiguration($builder, $expected)
     {
         $container = new ContainerBuilder(new ParameterBag([
             'kernel.debug' => false,
         ]));
-        $container->registerExtension(new OcubomTwigExtraExtension());
-        $buildContainer($container);
+        (new ClosureLoader($container))->load($builder);
         $container->getCompilerPassConfig()->setOptimizationPasses([]);
         $container->getCompilerPassConfig()->setRemovingPasses([]);
         $container->getCompilerPassConfig()->setAfterRemovingPasses([]);
@@ -48,26 +48,69 @@ class OcubomTwigExtraExtensionTest extends TestCase
         yield 'default' => [
             function (ContainerBuilder $container) {
                 $container->registerExtension(new OcubomTwigExtraExtension());
-                $container->loadFromExtension('ocubom_twig_extra');
+                $container->loadFromExtension('ocubom_twig_extra', [
+                    'html' => null,
+                    'svg' => null,
+                    'http_headers' => null,
+                ]);
             },
             [
                 'ocubom_twig_extra.listener.http_headers' => null,
-                'ocubom_twig_extra.extension.html' => HtmlExtension::class,
-                'ocubom_twig_extra.extension.svg' => SvgExtension::class,
+                'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
+                'ocubom_twig_extra.twig_svg_extension' => null,
             ],
         ];
 
-        yield 'with headers' => [
+        yield 'html disabled' => [
             function (ContainerBuilder $container) {
                 $container->registerExtension(new OcubomTwigExtraExtension());
                 $container->loadFromExtension('ocubom_twig_extra', [
+                    'html' => ['enabled' => false],
+                    'svg' => null,
+                    'http_headers' => null,
+                ]);
+            },
+            [
+                'ocubom_twig_extra.http_headers_listener' => null,
+                'ocubom_twig_extra.twig_html_extension' => null,
+                'ocubom_twig_extra.twig_svg_extension' => null,
+            ],
+        ];
+
+        yield 'http_headers' => [
+            function (ContainerBuilder $container) {
+                $container->registerExtension(new OcubomTwigExtraExtension());
+                $container->loadFromExtension('ocubom_twig_extra', [
+                    'html' => null,
+                    'svg' => null,
                     'http_headers' => array_values(AddHttpHeadersTest::$rules),
                 ]);
             },
             [
-                'ocubom_twig_extra.listener.http_headers' => AddHttpHeadersListener::class,
-                'ocubom_twig_extra.extension.html' => HtmlExtension::class,
-                'ocubom_twig_extra.extension.svg' => SvgExtension::class,
+                'ocubom_twig_extra.http_headers_listener' => AddHttpHeadersListener::class,
+                'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
+                'ocubom_twig_extra.twig_svg_extension' => null,
+            ],
+        ];
+
+        yield 'svg' => [
+            function (ContainerBuilder $container) {
+                $container->registerExtension(new OcubomTwigExtraExtension());
+                $container->loadFromExtension('ocubom_twig_extra', [
+                    'html' => null,
+                    'svg' => [
+                        'finders' => [
+                            'default' => ['ruta'],
+                            'fontawesome' => ['ruta'],
+                        ],
+                    ],
+                    'http_headers' => null,
+                ]);
+            },
+            [
+                'ocubom_twig_extra.listener.http_headers' => null,
+                'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
+                'ocubom_twig_extra.twig_svg_extension' => SvgExtension::class,
             ],
         ];
     }
