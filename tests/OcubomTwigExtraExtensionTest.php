@@ -15,6 +15,7 @@ use Ocubom\Twig\Extension\HtmlExtension;
 use Ocubom\Twig\Extension\SvgExtension;
 use Ocubom\TwigExtraBundle\DependencyInjection\OcubomTwigExtraExtension;
 use Ocubom\TwigExtraBundle\Listener\AddHttpHeadersListener;
+use Ocubom\TwigExtraBundle\Twig\WebpackEncoreExtension;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\ClosureLoader;
@@ -51,6 +52,7 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 $container->loadFromExtension('ocubom_twig_extra', [
                     'html' => null,
                     'svg' => null,
+                    'webpack_encore' => null,
                     'http_headers' => null,
                 ]);
             },
@@ -58,6 +60,7 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 'ocubom_twig_extra.listener.http_headers' => null,
                 'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
                 'ocubom_twig_extra.twig_svg_extension' => null,
+                'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
             ],
         ];
 
@@ -67,6 +70,7 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 $container->loadFromExtension('ocubom_twig_extra', [
                     'html' => ['enabled' => false],
                     'svg' => null,
+                    'webpack_encore' => null,
                     'http_headers' => null,
                 ]);
             },
@@ -74,6 +78,7 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 'ocubom_twig_extra.http_headers_listener' => null,
                 'ocubom_twig_extra.twig_html_extension' => null,
                 'ocubom_twig_extra.twig_svg_extension' => null,
+                'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
             ],
         ];
 
@@ -83,6 +88,7 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 $container->loadFromExtension('ocubom_twig_extra', [
                     'html' => null,
                     'svg' => null,
+                    'webpack_encore' => null,
                     'http_headers' => array_values(AddHttpHeadersTest::$rules),
                 ]);
             },
@@ -90,6 +96,7 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 'ocubom_twig_extra.http_headers_listener' => AddHttpHeadersListener::class,
                 'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
                 'ocubom_twig_extra.twig_svg_extension' => null,
+                'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
             ],
         ];
 
@@ -104,6 +111,7 @@ class OcubomTwigExtraExtensionTest extends TestCase
                             'fontawesome' => ['ruta'],
                         ],
                     ],
+                    'webpack_encore' => null,
                     'http_headers' => null,
                 ]);
             },
@@ -111,6 +119,25 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 'ocubom_twig_extra.listener.http_headers' => null,
                 'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
                 'ocubom_twig_extra.twig_svg_extension' => SvgExtension::class,
+                'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
+            ],
+        ];
+
+        yield 'webpack_encore disabled' => [
+            function (ContainerBuilder $container) {
+                $container->registerExtension(new OcubomTwigExtraExtension());
+                $container->loadFromExtension('ocubom_twig_extra', [
+                    'html' => null,
+                    'svg' => null,
+                    'webpack_encore' => ['enabled' => false],
+                    'http_headers' => null,
+                ]);
+            },
+            [
+                'ocubom_twig_extra.listener.http_headers' => null,
+                'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
+                'ocubom_twig_extra.twig_svg_extension' => null,
+                'ocubom_twig_extra.twig_webpack_encore_extension' => null,
             ],
         ];
     }

@@ -248,4 +248,21 @@ class Configuration implements ConfigurationInterface
                 ->end()
             ->end();
     }
+
+    private function addWebpackEncoreSection(ArrayNodeDefinition $root): void
+    {
+        $root
+            ->children()
+                ->arrayNode('output_paths')
+                    ->info('Paths where Symfony Encore will generate its output.')
+                    ->example(sprintf('["%s"]', implode('", "', [
+                        '%kernel.project_dir%/public/build',
+                    ])))
+                    ->defaultValue([
+                        '%kernel.project_dir%/public/build',
+                    ])
+                    ->prototype('scalar')
+                ->end()
+            ->end();
+    }
 }

@@ -22,6 +22,7 @@ use Ocubom\Twig\Extension\SvgExtension;
 use Ocubom\Twig\Extension\SvgRuntime;
 use Ocubom\TwigExtraBundle\Extensions;
 use Ocubom\TwigExtraBundle\Listener\AddHttpHeadersListener;
+use Ocubom\TwigExtraBundle\Twig\WebpackEncoreExtension;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -138,5 +139,15 @@ class OcubomTwigExtraExtension extends Extension
             // Create class aliases
             $container->setAlias(FontAwesomeFinder::class, 'ocubom_twig_extra.svg.fontawesome_finder');
         }
+    }
+
+    private function loadWebpackEncore(ContainerBuilder $container, array $config): void
+    {
+        $container->register('ocubom_twig_extra.twig_webpack_encore_extension', WebpackEncoreExtension::class)
+            ->setArguments([
+                new Reference('webpack_encore.entrypoint_lookup_collection'),
+                $config['output_paths'],
+            ])
+            ->addTag('twig.extension');
     }
 }

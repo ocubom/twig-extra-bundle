@@ -13,6 +13,7 @@ namespace Ocubom\TwigExtraBundle;
 
 use Ocubom\Twig\Extension\HtmlExtension;
 use Ocubom\Twig\Extension\SvgExtension;
+use Symfony\WebpackEncoreBundle\Twig\EntryFilesTwigExtension;
 use Twig\Error\SyntaxError;
 
 final class Extensions
@@ -33,6 +34,14 @@ final class Extensions
             'package' => 'ocubom/twig-svg-extension',
             'filters' => ['svg_symbols', 'fontawesome'],
             'functions' => ['fa', 'svg'],
+        ],
+        'webpack_encore' => [
+            'name' => 'webpack_encore',
+            'class' => EntryFilesTwigExtension::class, // Use the official twig extension
+            'class_name' => 'OcubomWebpackEncoreExtension',
+            'package' => 'symfony/webpack-encore-bundle', // Needed to enable this
+            'filters' => [],
+            'functions' => ['encore_entry_css_source', 'encore_entry_js_source'],
         ],
     ];
 

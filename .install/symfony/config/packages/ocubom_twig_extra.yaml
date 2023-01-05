@@ -33,6 +33,16 @@ ocubom_twig_extra:
                 - '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs'
                 - '%kernel.project_dir%/vendor/fortawesome/font-awesome/svgs/'
 
+    # Twig Webpack Encore Extension
+    webpack_encore:
+
+        # Enable or disable this extension
+        enabled: true
+
+        # Paths where Symfony Encore will generate its output.
+        output_paths:
+            - '%kernel.project_dir%/public/build'
+
     # HTTP Headers extract
     # The listener is only registered if some header is registered
     #http_headers:
