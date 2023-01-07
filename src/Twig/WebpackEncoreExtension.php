@@ -57,7 +57,6 @@ class WebpackEncoreExtension extends AbstractExtension
 
             return $entrypoint->getCssFiles($entryName);
         } finally {
-            dump('reset');
             $entrypoint->reset(); // Ensure reset after access files
         }
     }
@@ -113,7 +112,6 @@ class WebpackEncoreExtension extends AbstractExtension
 
     private function getEntrypointLookup(string $entrypointName): EntrypointLookupInterface
     {
-        // $this->container->get('webpack_encore.entrypoint_lookup_collection')
         return $this->collection->getEntrypointLookup($entrypointName);
     }
 }
