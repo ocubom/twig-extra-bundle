@@ -159,8 +159,8 @@ class Configuration implements ConfigurationInterface
             'iconify' => [
                 'name' => 'Iconify',
                 'paths' => [
-                    '%kernel.project_dir%/node_modules/node_modules/@iconify-json/',
-                    '%kernel.project_dir%/node_modules/node_modules/@iconify/json/',
+                    '%kernel.project_dir%/node_modules/@iconify-json/',
+                    '%kernel.project_dir%/node_modules/@iconify/json/',
                     '%kernel.project_dir%/vendor/iconify/json/',
                     class_exists(IconifyFinder::class) ? IconifyFinder::rootDir() : '',
                 ],

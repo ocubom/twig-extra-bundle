@@ -47,8 +47,8 @@ ocubom_twig_extra:
                 enabled: true
                 # The paths where the Iconify files will be searched for.
                 paths:
-                    - '%kernel.project_dir%/node_modules/node_modules/@iconify-json/'
-                    - '%kernel.project_dir%/node_modules/node_modules/@iconify/json/'
+                    - '%kernel.project_dir%/node_modules/@iconify-json/'
+                    - '%kernel.project_dir%/node_modules/@iconify/json/'
                     - '%kernel.project_dir%/vendor/iconify/json/'
 
                 # Loader configuration options for Iconify
