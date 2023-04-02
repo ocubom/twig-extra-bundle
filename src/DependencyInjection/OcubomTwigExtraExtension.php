@@ -215,25 +215,25 @@ class OcubomTwigExtraExtension extends Extension
         }
 
         // Register default runtime
-        if ($container->has('.ocubom_twig_extra.svg.default_finder')) {
+        if ($container->has('.ocubom_twig_extra.svg.file_system_finder.inner')) {
             // Register runtime
             $container->register('ocubom_twig_extra.twig_svg_runtime', SvgRuntime::class)
                 ->setArguments([
-                    new Reference('.ocubom_twig_extra.svg.default_finder.inner'),
+                    new Reference('.ocubom_twig_extra.svg.file_system_finder.inner'),
                 ])
                 ->setAutowired(true)
                 ->setAutoconfigured(true)
                 ->addTag('twig.runtime');
 
             // Create default finder (just an alias)
-            $container->setAlias('ocubom_twig_extra.svg.default_finder', '.ocubom_twig_extra.svg.filesystem_finder');
+            $container->setAlias('ocubom_twig_extra.svg.default_finder', '.ocubom_twig_extra.svg.file_system_finder.inner');
 
             // Create class aliases
             // $container->setAlias(FinderInterface::class, 'ocubom_twig_extra.svg.default_finder');
         }
 
         // Register fontawesome runtime
-        if ($container->has('.ocubom_twig_extra.svg.fontawesome_finder')) {
+        if ($container->has('.ocubom_twig_extra.svg.font_awesome_finder.inner')) {
             // Register runtime
             $container->register('ocubom_twig_extra.twig_fontawesome_runtime', FontAwesomeRuntime::class)
                 ->setArguments([
@@ -244,7 +244,7 @@ class OcubomTwigExtraExtension extends Extension
             // Create fontawesome finder
             $container->register('ocubom_twig_extra.svg.fontawesome_finder', FontAwesomeFinder::class)
                 ->setArguments([
-                    new Reference('.ocubom_twig_extra.svg.fontawesome_finder'),
+                    new Reference('.ocubom_twig_extra.svg.font_awesome_finder.inner'),
                 ]);
 
             // Create class aliases
