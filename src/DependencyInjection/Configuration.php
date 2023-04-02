@@ -11,9 +11,11 @@
 
 namespace Ocubom\TwigExtraBundle\DependencyInjection;
 
+use Iconify\IconsJSON\Finder as IconifyFinder;
 use Ocubom\TwigExtraBundle\Extensions;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\BooleanNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -43,15 +45,11 @@ class Configuration implements ConfigurationInterface
         string $name,
         bool $canBeDisabled = true
     ): ArrayNodeDefinition {
-        $node = $root
-            ->children()
-                ->arrayNode($name)
-                    ->{$canBeDisabled ? 'canBeDisabled' : 'canBeEnabled'}()
-                    ->info(sprintf(
-                        'Twig %s Extension',
-                        ucfirst($name)
-                    ));
+        $node = $root->children()->arrayNode($name);
         assert($node instanceof ArrayNodeDefinition);
+
+        $node->info(sprintf('Twig %s Extension', ucfirst($name)));
+        $node->{$canBeDisabled ? 'canBeDisabled' : 'canBeEnabled'}();
 
         $enabled = $node->find('enabled');
         assert($enabled instanceof BooleanNodeDefinition);
@@ -99,16 +97,12 @@ class Configuration implements ConfigurationInterface
                             ->end()
                             ->scalarNode('replace')
                                 ->info('The text that replaces the match in the original (printf processed using the matched value).')
-                                // ->example('')
                                 ->defaultValue('%s')
                             ->end()
                             ->arrayNode('formats')
                                 ->info('The response formats when this replacement must be done.')
                                 ->example('["text/html"]')
-                                // ->addDefaultChildrenIfNoneSet()
-                                ->prototype('scalar')
-                                    // ->defaultValue('text/html')
-                                ->end()
+                                ->prototype('scalar')->end()
                             ->end()
                         ->end()
                     ->end()
@@ -118,65 +112,116 @@ class Configuration implements ConfigurationInterface
 
     private function addHtmlSection(ArrayNodeDefinition $root): void
     {
-        $root
+        $children = $root
             ->children()
                 ->arrayNode('compression')
                     ->info('Compress HTML output')
                     ->addDefaultsIfNotSet()
-                    ->children()
-                        ->booleanNode('force')
-                            ->info('Force compression')
-                            ->defaultFalse()
-                        ->end()
-                        ->enumNode('level')
-                            ->info('The level of compression to use')
-                            ->defaultValue('smallest')
-                            ->values([
-                                'none',
-                                'fastest',
-                                'normal',
-                                'smallest',
-                            ])
-                        ->end()
-                    ->end()
-                ->end()
+                    ->children();
+
+        $children
+            ->booleanNode('force')
+                ->info('Force compression')
+                ->defaultFalse()
+            ->end();
+
+        $children
+            ->enumNode('level')
+                ->info('The level of compression to use')
+                ->defaultValue('smallest')
+                ->values([
+                    'none',
+                    'fastest',
+                    'normal',
+                    'smallest',
+                ])
             ->end();
     }
 
     private function addSvgSection(ArrayNodeDefinition $root): void
     {
-        $examples = [
-            'default' => [
-                '%kernel.project_dir%/assets',
-                '%kernel.project_dir%/node_modules',
+        $providers = [
+            'file_system' => [
+                'name' => 'Local File System',
+                'paths' => [
+                    '%kernel.project_dir%/assets',
+                    '%kernel.project_dir%/node_modules',
+                ],
             ],
-            'fontawesome' => [
-                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs',
-                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs',
-                '%kernel.project_dir%/vendor/fortawesome/font-awesome/svgs/',
+            'font_awesome' => [
+                'name' => 'FontAwesome',
+                'paths' => [
+                    '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs',
+                    '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs',
+                    '%kernel.project_dir%/vendor/fortawesome/font-awesome/svgs/',
+                ],
+            ],
+            'iconify' => [
+                'name' => 'Iconify',
+                'paths' => [
+                    '%kernel.project_dir%/node_modules/node_modules/@iconify-json/',
+                    '%kernel.project_dir%/node_modules/node_modules/@iconify/json/',
+                    '%kernel.project_dir%/vendor/iconify/json/',
+                    class_exists(IconifyFinder::class) ? IconifyFinder::rootDir() : '',
+                ],
+                'runtime' => function (NodeBuilder $parent): void {
+                    $parent
+                        ->arrayNode('svg_framework')
+                            ->info('Enable SVG Framework Server Side Rendering on classes (empty to disable).')
+                            ->defaultValue(['iconify', 'iconify-inline'])
+                            ->prototype('scalar')->end()
+                        ->end();
+
+                    $parent
+                        ->arrayNode('web_component')
+                            ->info('Enable Web Component Server Side Rendering on tags (empty to disable).')
+                            ->defaultValue(['icon', 'iconify-icon'])
+                            ->prototype('scalar')->end()
+                        ->end();
+                },
+                'loader' => function (NodeBuilder $parent): void {
+                    $parent
+                        ->scalarNode('cache_dir')
+                            ->info('Enable cache on this path (empty to disable).')
+                            ->defaultValue('%kernel.cache_dir%/iconify')
+                        ->end();
+                },
             ],
         ];
 
-        $finderKeys = array_keys($examples);
-
         $root
             ->beforeNormalization()
-                ->always(static function ($v) use ($finderKeys) {
-                    // Convert deprecated configuration
+                ->always(static function ($v) {
+                    // Convert to finders (1.x) configuration
                     $v['finders'] = $v['finders'] ?? [];
-                    foreach ($finderKeys as $key) {
+                    // Default finder
+                    $v['finders']['default'] = $v['finders']['default'] ?? $v['search_path'] ?? [];
+                    unset($v['search_path']);
+                    // FontAwesome
+                    $v['finders']['fontawesome'] = $v['finders']['fontawesome'] ?? $v['fontawesome']['search_path'] ?? [];
+                    unset($v['fontawesome']);
+
+                    // Convert to providers (2.x) configuration
+                    foreach ($v['finders'] as $key => $val) {
+                        if (empty($val)) {
+                            continue;
+                        }
+
                         switch ($key) {
                             case 'default':
-                                $v['finders'][$key] = $v['finders'][$key] ?? $v['search_path'] ?? [];
-                                unset($v['search_path']);
+                                $v['providers']['file_system']['paths'] = $v['providers']['file_system']['paths'] ?? $val;
                                 break;
 
                             case 'fontawesome':
-                                $v['finders'][$key] = $v['finders'][$key] ?? $v['fontawesome']['search_path'] ?? [];
-                                unset($v['fontawesome']);
+                                $v['providers']['font_awesome']['paths'] = $v['providers']['font_awesome']['paths'] ?? $val;
+                                break;
+
+                            default:
+                                $v['providers'][$key]['paths'] = $v['providers'][$key]['paths'] ?? $val;
                                 break;
                         }
                     }
+                    unset($v['finders']);
 
                     return $v;
                 })
@@ -185,32 +230,100 @@ class Configuration implements ConfigurationInterface
                 ->always(function ($v) {
                     // Clean deprecated configuration
                     unset($v['search_path']);
+                    unset($v['fontawesome']);
+                    unset($v['finders']);
 
-                    // Disable if no finder are registered
-                    $v['finders'] = array_filter($v['finders'] ?? []);
-                    $v['enabled'] = (0 !== count($v['finders']));
+                    // Enable/Disable providers
+                    $enabled = 0;
+                    foreach (array_keys($v['providers'] ?? []) as $key) {
+                        $v['providers'][$key]['paths'] = array_filter($v['providers'][$key]['paths'] ?? []);
+                        $v['providers'][$key]['enabled'] = $v['providers'][$key]['enabled'] && count($v['providers'][$key]['paths']) > 0;
+
+                        if ($v['providers'][$key]['enabled']) {
+                            ++$enabled;
+                        }
+                    }
+
+                    // Disable if no provider are enabled
+                    $v['enabled'] = $v['enabled'] && $enabled > 0;
 
                     return $v;
                 })
-            ->end()
+            ->end();
+
+        // Add providers (2.x) configuration
+        $parent = $root
+            ->fixXmlConfig('provider')
+            ->children()
+                ->arrayNode('providers')
+                    ->info('SVG providers.')
+                    ->addDefaultsIfNotSet();
+
+        foreach ($providers as $key => $val) {
+            $provider = $parent
+                ->children()
+                    ->arrayNode($key);
+
+            $children = $provider
+                    ->info(sprintf('%s provider.', $val['name']))
+                    ->canBeDisabled()
+                    ->children();
+
+            $enabled = $provider->find('enabled');
+            assert($enabled instanceof BooleanNodeDefinition);
+            $enabled->info('Enable or disable this provider.');
+
+            // Provider paths
+            $provider->fixXmlConfig('path');
+            $children
+                ->arrayNode('paths')
+                    ->info(sprintf('The paths where the %s files will be searched for.', $val['name']))
+                    // ->example(sprintf('["%s"]', implode('", "', $val['paths'])))
+                    ->defaultValue($val['paths'])
+                    ->prototype('scalar')->end()
+                ->end();
+
+            // Extra configuration
+            if (is_callable($val['loader'] ?? null)) {
+                $val['loader']($children->arrayNode('loader')
+                    ->info(sprintf('Loader configuration options for %s', $val['name']))
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                );
+            }
+
+            if (is_callable($val['runtime'] ?? null)) {
+                $val['runtime']($children->arrayNode('runtime')
+                    ->info(sprintf('Runtime configuration options for %s', $val['name']))
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                );
+            }
+        }
+
+        // Add finders (1.x) configuration
+        $root
             ->fixXmlConfig('finder')
             ->children()
                 ->arrayNode('finders')
+                    ->setDeprecated(
+                        'ocubom/twig-extra-bundle',
+                        '1.3',
+                        'The "%node%" option is deprecated. Use "providers" instead.'
+                    )
                     ->info('The paths where SVG files will be searched for.')
                     ->children()
                         ->arrayNode('default')
                             ->info('The default paths where the SVG files will be searched for.')
-                            ->example(sprintf('["%s"]', implode('", "', $examples['default'])))
-                            ->defaultValue($examples['default'])
-                            ->prototype('scalar')
-                            ->end()
+                            ->example(sprintf('["%s"]', implode('", "', $providers['file_system']['paths'])))
+                            // ->defaultValue($providers['file_system']['paths'])
+                            ->prototype('scalar')->end()
                         ->end()
                         ->arrayNode('fontawesome')
                             ->info('The paths where the FontAwesome files will be searched for.')
-                            ->example(sprintf('["%s"]', implode('", "', $examples['fontawesome'])))
-                            ->defaultValue($examples['fontawesome'])
-                            ->prototype('scalar')
-                            ->end()
+                            ->example(sprintf('["%s"]', implode('", "', $providers['font_awesome']['paths'])))
+                            // ->defaultValue($providers['font_awesome']['paths'])
+                            ->prototype('scalar')->end()
                         ->end()
                     ->end()
                 ->end()
@@ -218,30 +331,25 @@ class Configuration implements ConfigurationInterface
                     ->setDeprecated(
                         'ocubom/twig-extra-bundle',
                         '1.2',
-                        'The "%node%" option is deprecated. Use "finder.svg" instead.'
+                        'The "%node%" option is deprecated. Use "providers.filesystem" instead.'
                     )
                     ->info('The paths where the SVG files will be searched for.')
-                    ->example(sprintf('["%s"]', implode('", "', $examples['default'])))
+                    ->example(sprintf('["%s"]', implode('", "', $providers['file_system']['paths'])))
+                    // ->defaultValue($providers['file_system']['paths'])
                     ->prototype('scalar')->end()
                 ->end()
                 ->arrayNode('fontawesome')
                     ->setDeprecated(
                         'ocubom/twig-extra-bundle',
                         '1.2',
-                        'The "%node%" option is deprecated. Use "finder.fontawesome" instead.'
+                        'The "%node%" option is deprecated. Use "providers.fontawesome" instead.'
                     )
                     ->info('Configuration for FontAwesome.')
                     ->children()
                         ->arrayNode('search_path')
                             ->info('The paths where the FontAwesome files will be searched for.')
-                            ->example(sprintf('["%s"]', implode('", "', [
-                                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs',
-                                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs',
-                            ])))
-                            ->defaultValue([
-                                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs',
-                                '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs',
-                            ])
+                            ->example(sprintf('["%s"]', implode('", "', $providers['font_awesome']['paths'])))
+                            // ->defaultValue($providers['font_awesome']['paths'])
                             ->prototype('scalar')->end()
                         ->end()
                     ->end()
@@ -251,18 +359,17 @@ class Configuration implements ConfigurationInterface
 
     private function addWebpackEncoreSection(ArrayNodeDefinition $root): void
     {
+        $defaultPaths = [
+            '%kernel.project_dir%/public/build',
+        ];
+
         $root
             ->children()
                 ->arrayNode('output_paths')
                     ->info('Paths where Symfony Encore will generate its output.')
-                    ->example(sprintf('["%s"]', implode('", "', [
-                        '%kernel.project_dir%/public/build',
-                    ])))
-                    ->defaultValue([
-                        '%kernel.project_dir%/public/build',
-                    ])
-                    ->prototype('scalar')
-                ->end()
+                    ->example(sprintf('["%s"]', implode('", "', $defaultPaths)))
+                    // ->defaultValue($defaultPaths)
+                    ->prototype('scalar')->end()
             ->end();
     }
 }

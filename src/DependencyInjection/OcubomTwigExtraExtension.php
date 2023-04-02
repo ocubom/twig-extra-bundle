@@ -18,15 +18,22 @@ use Ocubom\Twig\Extension\Svg\Finder;
 use Ocubom\Twig\Extension\Svg\FinderInterface;
 use Ocubom\Twig\Extension\Svg\Library\FontAwesome\Finder as FontAwesomeFinder;
 use Ocubom\Twig\Extension\Svg\Library\FontAwesomeRuntime;
+use Ocubom\Twig\Extension\Svg\Loader\ChainLoader;
+use Ocubom\Twig\Extension\Svg\Loader\LoaderInterface;
+use Ocubom\Twig\Extension\Svg\Util\PathCollection;
 use Ocubom\Twig\Extension\SvgExtension;
 use Ocubom\Twig\Extension\SvgRuntime;
 use Ocubom\TwigExtraBundle\Extensions;
 use Ocubom\TwigExtraBundle\Listener\AddHttpHeadersListener;
 use Ocubom\TwigExtraBundle\Twig\WebpackEncoreExtension;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
+
+use function BenTools\IterableFunctions\iterable_to_array;
+use function Ocubom\Math\base_convert;
 
 class OcubomTwigExtraExtension extends Extension
 {
@@ -36,13 +43,16 @@ class OcubomTwigExtraExtension extends Extension
         assert($configuration instanceof ConfigurationInterface);
         $config = $this->processConfiguration($configuration, $configs);
 
+        // Load enabled extensions
         foreach (array_keys(Extensions::getClasses()) as $name) {
             if ($this->isConfigEnabled($container, $config[$name])) {
                 $call = str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $name)));
+
                 $this->{'load'.$call}($container, $config[$name]);
             }
         }
 
+        // Load headers listener
         $this->loadHttpHeaders($container, $config['http_headers']);
     }
 
@@ -50,7 +60,7 @@ class OcubomTwigExtraExtension extends Extension
     {
         // Filter enabled header rules
         $headers = array_filter($config, function (array $header): bool {
-            return $header['enabled'] ? true : false;
+            return (bool) $header['enabled'];
         });
 
         // Only register listener if some rule is defined
@@ -77,71 +87,168 @@ class OcubomTwigExtraExtension extends Extension
             ->addTag('twig.runtime');
     }
 
+    /** @psalm-suppress UndefinedClass */
     private function loadSvg(ContainerBuilder $container, array $config): void
     {
-        if (empty($config['finders'])) {
+        if (empty($config['providers'])) {
             return;
         }
 
-        $container
-            ->register('ocubom_twig_extra.twig_svg_extension', SvgExtension::class)
+        // Register the extension
+        $container->register('ocubom_twig_extra.twig_svg_extension', SvgExtension::class)
             ->addTag('twig.extension');
 
-        foreach ($config['finders'] as $name => $paths) {
-            $hash = sha1(serialize($paths));
-            $key = ".ocubom_twig_extra.svg.finder.{$hash}";
+        switch (true) {
+            case interface_exists(LoaderInterface::class):
+                $this->loadSvgLoaders($container, $config);
+                break;
 
-            // Register finder if not exists
-            if (!$container->has($key)) {
+            case interface_exists(FinderInterface::class):
+                $this->loadSvgFinders($container, $config);
+                break;
+        }
+    }
+
+    private function loadSvgLoaders(ContainerBuilder $container, array $config): void
+    {
+        // Register global loader
+        $container->register('ocubom_twig_extra.svg_loader', ChainLoader::class)
+            ->setArguments([
+                new TaggedIteratorArgument('ocubom_twig_extra.svg_loader'),
+            ]);
+
+        // Register global runtime
+        $container->register('ocubom_twig_extra.twig_svg_runtime', SvgRuntime::class)
+            ->setArguments([
+                new Reference('ocubom_twig_extra.svg_loader'),
+            ])
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+            ->addTag('twig.runtime');
+
+        // Register individual providers
+        foreach ($config['providers'] as $name => $provider) {
+            if (!$provider['enabled']) {
+                continue; // @codeCoverageIgnore
+            }
+
+            $case = str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $name)));
+
+            // Loader
+            $loaderClass = "Ocubom\\Twig\\Extension\\Svg\\Provider\\{$case}\\{$case}Loader";
+            $loaderIdent = "ocubom_twig_extra.svg_loader.{$name}";
+            if (class_exists($loaderClass)) {
+                // $loaderClass = (new \ReflectionClass($loaderClass))->getName();
+
+                // Register the path collection (when necessary)
+                $pathsIdent = base_convert(sha1(serialize($provider['paths'])), 16, 62);
+                $pathsIdent = ".ocubom_twig_extra.svg_path_collection.{$pathsIdent}";
+                if (!$container->has($pathsIdent)) {
+                    $container->register($pathsIdent, PathCollection::class)
+                        ->setArguments($provider['paths'])
+                        ->setPublic(false);
+                }
+
+                // Register loader
+                $container->register($loaderIdent, $loaderClass)
+                    ->setArguments(iterable_to_array(call_user_func(function () use ($provider, $pathsIdent) {
+                        yield new Reference($pathsIdent);
+
+                        // Pass custom loader options
+                        if (isset($provider['loader'])) {
+                            yield $provider['loader'];
+                        }
+                    })))
+                    ->setAutowired(true)
+                    ->setAutoconfigured(true)
+                    ->addTag('ocubom_twig_extra.svg_loader');
+            }
+
+            // Runtime
+            $runtimeClass = "Ocubom\\Twig\\Extension\\Svg\\Provider\\{$case}\\{$case}Runtime";
+            $runtimeIdent = "ocubom_twig_extra.twig_svg_{$name}_runtime";
+            if ($container->has($loaderIdent) && class_exists($runtimeClass)) {
+                // Register runtime
                 $container
-                    ->register($key, Finder::class)
-                    ->setArguments($paths)
-                    ->setPublic(false);
+                    ->register($runtimeIdent, $runtimeClass)
+                    ->setArguments(iterable_to_array(call_user_func(function () use ($provider, $loaderIdent) {
+                        yield new Reference($loaderIdent);
+
+                        // Pass custom runtime options
+                        if (isset($provider['runtime'])) {
+                            yield $provider['runtime'];
+                        }
+                    })))
+                    ->setAutowired(true)
+                    ->setAutoconfigured(true)
+                    ->addTag('twig.runtime');
+
+                // Register the extension
+                if (!$container->has('ocubom_twig_extra.twig_svg_extension')) {
+                    $container->register('ocubom_twig_extra.twig_svg_extension', SvgExtension::class)
+                        ->addTag('twig.extension');
+                }
+            }
+        }
+    }
+
+    /** @psalm-suppress UndefinedClass */
+    private function loadSvgFinders(ContainerBuilder $container, array $config): void
+    {
+        foreach ($config['providers'] as $name => $provider) {
+            if (!$provider['enabled']) {
+                continue;
+            }
+
+            // Path colletion
+            $pathsIdent = sha1(serialize($provider['paths']));
+            $pathsIdent = ".ocubom_twig_extra.svg.finder.{$pathsIdent}";
+            if (!$container->has($pathsIdent)) {
+                $container->register($pathsIdent, Finder::class)
+                    ->setArguments($provider['paths'])
+                    ->setPublic(false)
+                    ->addTag('ocubom_twig_extra.svg_finder');
             }
 
             // Create a hidden alias
-            $container->setAlias(".ocubom_twig_extra.svg.{$name}_finder.inner", $key);
+            $container->setAlias(".ocubom_twig_extra.svg.{$name}_finder.inner", $pathsIdent);
         }
 
         // Register default runtime
-        if ($container->has('.ocubom_twig_extra.svg.default_finder.inner')) {
+        if ($container->has('.ocubom_twig_extra.svg.default_finder')) {
             // Register runtime
-            $container
-                ->register('ocubom_twig_extra.twig_svg_runtime', SvgRuntime::class)
+            $container->register('ocubom_twig_extra.twig_svg_runtime', SvgRuntime::class)
                 ->setArguments([
-                    new Reference('ocubom_twig_extra.svg.default_finder'),
-                    new Reference('logger'),
+                    new Reference('.ocubom_twig_extra.svg.default_finder.inner'),
                 ])
+                ->setAutowired(true)
+                ->setAutoconfigured(true)
                 ->addTag('twig.runtime');
 
             // Create default finder (just an alias)
-            $container->setAlias('ocubom_twig_extra.svg.default_finder', '.ocubom_twig_extra.svg.default_finder.inner');
+            $container->setAlias('ocubom_twig_extra.svg.default_finder', '.ocubom_twig_extra.svg.filesystem_finder');
 
             // Create class aliases
-            $container->setAlias(FinderInterface::class, 'ocubom_twig_extra.svg.default_finder');
+            // $container->setAlias(FinderInterface::class, 'ocubom_twig_extra.svg.default_finder');
         }
 
         // Register fontawesome runtime
-        if ($container->has('.ocubom_twig_extra.svg.fontawesome_finder.inner')) {
+        if ($container->has('.ocubom_twig_extra.svg.fontawesome_finder')) {
             // Register runtime
-            $container
-                ->register('ocubom_twig_extra.twig_fontawesome_runtime', FontAwesomeRuntime::class)
+            $container->register('ocubom_twig_extra.twig_fontawesome_runtime', FontAwesomeRuntime::class)
                 ->setArguments([
                     new Reference('ocubom_twig_extra.svg.fontawesome_finder'),
-                    new Reference('logger'),
                 ])
                 ->addTag('twig.runtime');
 
             // Create fontawesome finder
-            $container
-                ->register('ocubom_twig_extra.svg.fontawesome_finder', FontAwesomeFinder::class)
+            $container->register('ocubom_twig_extra.svg.fontawesome_finder', FontAwesomeFinder::class)
                 ->setArguments([
-                    new Reference('.ocubom_twig_extra.svg.fontawesome_finder.inner'),
-                    new Reference('logger'),
+                    new Reference('.ocubom_twig_extra.svg.fontawesome_finder'),
                 ]);
 
             // Create class aliases
-            $container->setAlias(FontAwesomeFinder::class, 'ocubom_twig_extra.svg.fontawesome_finder');
+            // $container->setAlias(FontAwesomeFinder::class, 'ocubom_twig_extra.svg.fontawesome_finder');
         }
     }
 

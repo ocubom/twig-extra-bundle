@@ -1,6 +1,6 @@
 ocubom_twig_extra:
 
-    # Twig HTML Extension
+    # Twig Html Extension
     html:
 
         # Enable or disable this extension
@@ -13,27 +13,61 @@ ocubom_twig_extra:
             # The level of compression to use
             level: smallest # One of "none"; "fastest"; "normal"; "smallest"
 
-    # Twig SVG Extension
+    # Twig Svg Extension
     svg:
 
         # Enable or disable this extension
         enabled: true
 
-        # The paths where SVG files will be searched for.
-        finders:
+        # SVG providers.
+        providers:
 
-            # The default paths where the SVG files will be searched for.
-            default:
-                - '%kernel.project_dir%/assets'
-                - '%kernel.project_dir%/node_modules'
+            # Local File System provider.
+            file_system:
+                # Enable or disable this provider.
+                enabled: true
+                # The paths where the Local File System files will be searched for.
+                paths:
+                    - '%kernel.project_dir%/assets'
+                    - '%kernel.project_dir%/node_modules'
 
-            # The paths where the FontAwesome files will be searched for.
-            fontawesome:
-                - '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs'
-                - '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs'
-                - '%kernel.project_dir%/vendor/fortawesome/font-awesome/svgs/'
+            # FontAwesome provider.
+            font_awesome:
+                # Enable or disable this provider.
+                enabled: true
+                # The paths where the FontAwesome files will be searched for.
+                paths:
+                    - '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs'
+                    - '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs'
+                    - '%kernel.project_dir%/vendor/fortawesome/font-awesome/svgs/'
 
-    # Twig Webpack Encore Extension
+            # Iconify provider.
+            iconify:
+                # Enable or disable this provider.
+                enabled: true
+                # The paths where the Iconify files will be searched for.
+                paths:
+                    - '%kernel.project_dir%/node_modules/node_modules/@iconify-json/'
+                    - '%kernel.project_dir%/node_modules/node_modules/@iconify/json/'
+                    - '%kernel.project_dir%/vendor/iconify/json/'
+
+                # Loader configuration options for Iconify
+                loader:
+                    # Enable cache on this path (empty to disable).
+                    cache_dir: '%kernel.cache_dir%/iconify'
+
+                # Runtime configuration options for Iconify
+                runtime:
+                    # Enable SVG Framework Server Side Rendering on classes (empty to disable).
+                    svg_framework:
+                        - iconify
+                        - iconify-inline
+                    # Enable Web Component Server Side Rendering on tags (empty to disable).
+                    web_component:
+                        - icon
+                        - iconify-icon
+
+    # Twig Webpack_encore Extension
     webpack_encore:
 
         # Enable or disable this extension
@@ -43,9 +77,10 @@ ocubom_twig_extra:
         output_paths:
             - '%kernel.project_dir%/public/build'
 
-    # HTTP Headers extract
-    # The listener is only registered if some header is registered
+    # HTTP headers that must be set.
+    # The listener will only be registered if at least one rule is enabled.
     #http_headers:
+    #
     #    # Duplicate robots meta as X-Robots-Tag
     #    # @see https://developers.google.com/search/docs/advanced/robots/robots_meta_tag#xrobotstag
     #    -   name:    'X-Robots-Tag'

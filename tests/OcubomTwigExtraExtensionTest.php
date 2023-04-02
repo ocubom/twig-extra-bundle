@@ -37,9 +37,13 @@ class OcubomTwigExtraExtensionTest extends TestCase
 
         foreach ($expected as $name => $class) {
             if (null === $class) {
-                $this->assertFalse($container->hasDefinition($name));
+                $this->assertFalse($container->hasDefinition($name), $name.' should not be registered.');
             } else {
-                $this->assertEquals($class, $container->getDefinition($name)->getClass());
+                $this->assertEquals(
+                    $class,
+                    $container->getDefinition($name)->getClass(),
+                    'Invalid class '.$class.' registered for '.$name
+                );
             }
         }
     }
@@ -57,10 +61,10 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 ]);
             },
             [
-                'ocubom_twig_extra.listener.http_headers' => null,
                 'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
-                'ocubom_twig_extra.twig_svg_extension' => null,
+                'ocubom_twig_extra.twig_svg_extension' => SvgExtension::class,
                 'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
+                'ocubom_twig_extra.listener.http_headers' => null,
             ],
         ];
 
@@ -75,51 +79,28 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 ]);
             },
             [
-                'ocubom_twig_extra.http_headers_listener' => null,
                 'ocubom_twig_extra.twig_html_extension' => null,
-                'ocubom_twig_extra.twig_svg_extension' => null,
+                'ocubom_twig_extra.twig_svg_extension' => SvgExtension::class,
                 'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
+                'ocubom_twig_extra.http_headers_listener' => null,
             ],
         ];
 
-        yield 'http_headers' => [
+        yield 'svg disabled' => [
             function (ContainerBuilder $container) {
                 $container->registerExtension(new OcubomTwigExtraExtension());
                 $container->loadFromExtension('ocubom_twig_extra', [
                     'html' => null,
-                    'svg' => null,
-                    'webpack_encore' => null,
-                    'http_headers' => array_values(AddHttpHeadersTest::$rules),
-                ]);
-            },
-            [
-                'ocubom_twig_extra.http_headers_listener' => AddHttpHeadersListener::class,
-                'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
-                'ocubom_twig_extra.twig_svg_extension' => null,
-                'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
-            ],
-        ];
-
-        yield 'svg' => [
-            function (ContainerBuilder $container) {
-                $container->registerExtension(new OcubomTwigExtraExtension());
-                $container->loadFromExtension('ocubom_twig_extra', [
-                    'html' => null,
-                    'svg' => [
-                        'finders' => [
-                            'default' => ['ruta'],
-                            'fontawesome' => ['ruta'],
-                        ],
-                    ],
+                    'svg' => ['enabled' => false],
                     'webpack_encore' => null,
                     'http_headers' => null,
                 ]);
             },
             [
-                'ocubom_twig_extra.listener.http_headers' => null,
                 'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
-                'ocubom_twig_extra.twig_svg_extension' => SvgExtension::class,
+                'ocubom_twig_extra.twig_svg_extension' => null,
                 'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
+                'ocubom_twig_extra.listener.http_headers' => null,
             ],
         ];
 
@@ -134,10 +115,51 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 ]);
             },
             [
-                'ocubom_twig_extra.listener.http_headers' => null,
                 'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
-                'ocubom_twig_extra.twig_svg_extension' => null,
+                'ocubom_twig_extra.twig_svg_extension' => SvgExtension::class,
                 'ocubom_twig_extra.twig_webpack_encore_extension' => null,
+                'ocubom_twig_extra.listener.http_headers' => null,
+            ],
+        ];
+
+        yield 'http_headers' => [
+            function (ContainerBuilder $container) {
+                $container->registerExtension(new OcubomTwigExtraExtension());
+                $container->loadFromExtension('ocubom_twig_extra', [
+                    'html' => null,
+                    'svg' => null,
+                    'webpack_encore' => null,
+                    'http_headers' => array_values(AddHttpHeadersTest::$rules),
+                ]);
+            },
+            [
+                'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
+                'ocubom_twig_extra.twig_svg_extension' => SvgExtension::class,
+                'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
+                'ocubom_twig_extra.http_headers_listener' => AddHttpHeadersListener::class,
+            ],
+        ];
+
+        yield 'svg legacy config' => [
+            function (ContainerBuilder $container) {
+                $container->registerExtension(new OcubomTwigExtraExtension());
+                $container->loadFromExtension('ocubom_twig_extra', [
+                    'html' => null,
+                    'svg' => [
+                        'search_path' => ['/dummy/path'],
+                        'fontawesome' => [
+                            'search_path' => ['/dummy/path'],
+                        ],
+                    ],
+                    'webpack_encore' => null,
+                    'http_headers' => array_values(AddHttpHeadersTest::$rules),
+                ]);
+            },
+            [
+                'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
+                'ocubom_twig_extra.twig_svg_extension' => SvgExtension::class,
+                'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
+                'ocubom_twig_extra.http_headers_listener' => AddHttpHeadersListener::class,
             ],
         ];
     }

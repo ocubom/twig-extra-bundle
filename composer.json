@@ -41,7 +41,7 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.4|^3.9",
         "ocubom/twig-html-extension": "^1.0|^2.0",
-        "ocubom/twig-svg-extension": "^1.0",
+        "ocubom/twig-svg-extension": "^1.0|^2.0",
         "symfony/phpunit-bridge": "^6.1",
         "symfony/webpack-encore-bundle": "^1.16"
     },

@@ -32,7 +32,7 @@ final class Extensions
             'class' => SvgExtension::class,
             'class_name' => 'OcubomSvgExtension',
             'package' => 'ocubom/twig-svg-extension',
-            'filters' => ['svg_symbols', 'fontawesome'],
+            'filters' => ['svg', 'svg_symbols', 'fontawesome', 'iconify'],
             'functions' => ['fa', 'svg'],
         ],
         'webpack_encore' => [
