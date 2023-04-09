@@ -367,8 +367,8 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->arrayNode('output_paths')
                     ->info('Paths where Symfony Encore will generate its output.')
-                    ->example(sprintf('["%s"]', implode('", "', $defaultPaths)))
-                    // ->defaultValue($defaultPaths)
+                    // ->example(sprintf('["%s"]', implode('", "', $defaultPaths)))
+                    ->defaultValue($defaultPaths)
                     ->prototype('scalar')->end()
             ->end();
     }
