@@ -12,6 +12,7 @@
 namespace Ocubom\TwigExtraBundle;
 
 use Ocubom\TwigExtraBundle\DependencyInjection\Compiler\SuggestMissingExtensionPass;
+use Ocubom\TwigExtraBundle\DependencyInjection\Compiler\SvgTraceableLoaderPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
@@ -22,5 +23,6 @@ class OcubomTwigExtraBundle extends Bundle
         parent::build($container);
 
         $container->addCompilerPass(new SuggestMissingExtensionPass());
+        $container->addCompilerPass(new SvgTraceableLoaderPass());
     }
 }

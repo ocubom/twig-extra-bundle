@@ -23,6 +23,7 @@ use Ocubom\Twig\Extension\Svg\Loader\LoaderInterface;
 use Ocubom\Twig\Extension\Svg\Util\PathCollection;
 use Ocubom\Twig\Extension\SvgExtension;
 use Ocubom\Twig\Extension\SvgRuntime;
+use Ocubom\TwigExtraBundle\DataCollector\SvgDataCollector;
 use Ocubom\TwigExtraBundle\Extensions;
 use Ocubom\TwigExtraBundle\Listener\AddHttpHeadersListener;
 use Ocubom\TwigExtraBundle\Twig\WebpackEncoreExtension;
@@ -31,6 +32,7 @@ use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 
 use function BenTools\IterableFunctions\iterable_to_array;
 use function Ocubom\Math\base_convert;
@@ -115,7 +117,8 @@ class OcubomTwigExtraExtension extends Extension
         $container->register('ocubom_twig_extra.svg_loader', ChainLoader::class)
             ->setArguments([
                 new TaggedIteratorArgument('ocubom_twig_extra.svg_loader'),
-            ]);
+            ])
+            ->addTag('monolog.logger', ['channel' => 'svg_extension']);
 
         // Register global runtime
         $container->register('ocubom_twig_extra.twig_svg_runtime', SvgRuntime::class)
@@ -124,7 +127,19 @@ class OcubomTwigExtraExtension extends Extension
             ])
             ->setAutowired(true)
             ->setAutoconfigured(true)
+            ->addTag('monolog.logger', ['channel' => 'svg_extension'])
             ->addTag('twig.runtime');
+
+        // Register Data Collector
+        if (interface_exists(DataCollectorInterface::class)) {
+            $container->register('data_collector.svg', SvgDataCollector::class)
+                ->addTag('monolog.logger', ['channel' => 'svg_extension'])
+                ->addTag('data_collector', [
+                    'template' => '@OcubomTwigExtra/Collector/svg.html.twig',
+                    'id' => 'svg',
+                    // 'priority' => 100,
+                ]);
+        }
 
         // Register individual providers
         foreach ($config['providers'] as $name => $provider) {
@@ -138,8 +153,6 @@ class OcubomTwigExtraExtension extends Extension
             $loaderClass = "Ocubom\\Twig\\Extension\\Svg\\Provider\\{$case}\\{$case}Loader";
             $loaderIdent = "ocubom_twig_extra.svg_loader.{$name}";
             if (class_exists($loaderClass)) {
-                // $loaderClass = (new \ReflectionClass($loaderClass))->getName();
-
                 // Register the path collection (when necessary)
                 $pathsIdent = base_convert(sha1(serialize($provider['paths'])), 16, 62);
                 $pathsIdent = ".ocubom_twig_extra.svg_path_collection.{$pathsIdent}";
@@ -161,6 +174,7 @@ class OcubomTwigExtraExtension extends Extension
                     })))
                     ->setAutowired(true)
                     ->setAutoconfigured(true)
+                    ->addTag('monolog.logger', ['channel' => 'svg_extension'])
                     ->addTag('ocubom_twig_extra.svg_loader');
             }
 
@@ -181,13 +195,8 @@ class OcubomTwigExtraExtension extends Extension
                     })))
                     ->setAutowired(true)
                     ->setAutoconfigured(true)
+                    ->addTag('monolog.logger', ['channel' => 'svg_extension'])
                     ->addTag('twig.runtime');
-
-                // Register the extension
-                if (!$container->has('ocubom_twig_extra.twig_svg_extension')) {
-                    $container->register('ocubom_twig_extra.twig_svg_extension', SvgExtension::class)
-                        ->addTag('twig.extension');
-                }
             }
         }
     }

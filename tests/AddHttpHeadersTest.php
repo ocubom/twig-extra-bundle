@@ -12,7 +12,6 @@
 namespace Ocubom\TwigExtraBundle\Tests;
 
 use Ocubom\TwigExtraBundle\Listener\AddHttpHeadersListener;
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;

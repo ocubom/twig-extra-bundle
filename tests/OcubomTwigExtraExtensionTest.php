@@ -16,7 +16,6 @@ use Ocubom\Twig\Extension\SvgExtension;
 use Ocubom\TwigExtraBundle\DependencyInjection\OcubomTwigExtraExtension;
 use Ocubom\TwigExtraBundle\Listener\AddHttpHeadersListener;
 use Ocubom\TwigExtraBundle\Twig\WebpackEncoreExtension;
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\ClosureLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;

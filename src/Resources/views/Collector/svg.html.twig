@@ -1,0 +1,299 @@
+{% extends '@WebProfiler/Profiler/layout.html.twig' %}
+
+
+{% block toolbar %}
+    {% if collector.svgTotalCount %}
+        {% set icon %}
+            {# this is the content displayed as a panel in the toolbar #}
+            {% set status_color = collector.svgFailureCount ? 'red' : collector.svgWarningCount ? 'yellow' : 'none' %}
+            {{ source('@OcubomTwigExtra/Icon/icons.svg') }}
+            <span class="sf-toolbar-value">{{ collector.svgFailureCount ?: collector.svgWarningCount ?: collector.svgTotalCount }}</span>
+        {% endset %}
+
+        {% set text %}
+            {# this is the content displayed when hovering the mouse over the toolbar panel #}
+            <div class="sf-toolbar-info-group">
+                <div class="sf-toolbar-info-piece">
+                    <b>Errors</b>
+                    <span class="sf-toolbar-status {{ collector.svgFailureCount > 0 ? 'sf-toolbar-status-red' }}">{{ collector.svgFailureCount }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b>Warnings</b>
+                    <span class="sf-toolbar-status {{ collector.svgWarningCount > 0 ? 'sf-toolbar-status-yellow' }}">{{ collector.svgWarningCount }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b>Success</b>
+                    <span class="sf-toolbar-status {{ collector.svgSuccessCount > 0 ? 'sf-toolbar-status-green' }}">{{ collector.svgSuccessCount }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b>Total</b>
+                    <span class="sf-toolbar-status">{{ collector.svg|length }}</span>
+                </div>
+            </div>
+            <div class="sf-toolbar-info-group">
+                <div class="sf-toolbar-info-piece">
+                    <b>Registered loaders</b>
+                    <span class="sf-toolbar-status">{{ collector.loaders|length }}</span>
+                </div>
+            </div>
+        {% endset %}
+
+        {# the 'link' value set to 'false' means that this panel doesn't show a section in the web profiler #}
+        {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { link: true, status: status_color }) }}
+    {% endif %}
+{% endblock %}
+
+{% block menu %}
+    {# This left-hand menu appears when using the full-screen profiler. #}
+    <span class="label {{ collector.svgTotalCount == 0 ? 'disabled' }} label-status-{{ collector.svgFailureCount ? 'error' : collector.svgWarningCount ? 'warning' : 'none' }}">
+        <span class="icon">{{ source('@OcubomTwigExtra/Icon/icons.svg') }}</span>
+        <strong>SVG Extension</strong>
+        {% if collector.svgFailureCount ?: collector.svgWarningCount  %}
+            <span class="count">
+                {{ collector.svgFailureCount ?: collector.svgWarningCount }}
+            </span>
+        {% endif %}
+    </span>
+{% endblock %}
+{% block panel %}
+    {# Optional, for showing the most details. #}
+    <h2>Scalable Vector Graphics (SVG) Twig Extension</h2>
+    {% if collector.svgTotalCount == 0 and not collector.loaders%}
+
+        <div class="empty empty-panel">
+            <p>No Scalable Vector Graphics (SVG) activity have been recorded. Check that debugging is enabled in the kernel.</p>
+        </div>
+
+    {% else %}
+
+        {% if collector.svgTotalCount > 0  %}
+            <h2>SVG files <small>({{ collector.svgTotalCount }})</small></h2>
+
+            <div class="metrics">
+                <div class="metric">
+                    <span class="value">{{ collector.svgTotalCount }}</span>
+                    <span class="label">Total</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-group">
+                    <div class="metric">
+                        <span class="value">{{ collector.svgSuccessCount }}</span>
+                        <span class="label">Success</span>
+                    </div>
+                    <div class="metric">
+                        <span class="value">{{ collector.svgWarningCount }}</span>
+                        <span class="label">Warning</span>
+                    </div>
+                    <div class="metric">
+                        <span class="value">{{ collector.svgFailureCount }}</span>
+                        <span class="label">Error</span>
+                    </div>
+                </div>
+            </div>
+
+            <table class="svg-logs logs">
+                <colgroup>
+                    <col style="width: 8.75rem">
+                    <col>
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Loader</th>
+                    </tr>
+                </thead>
+
+                {% for svg in collector.svg %}
+                    {% set svg_css_class = 'failure' == svg.type
+                        ? 'error'
+                        : 'warning' == svg.type ? 'warning' : 'success'
+                    %}
+
+                    <tr class="status-{{ svg_css_class }}">
+                        <th colspan="3" class="colored font-normal">
+                            <span class="svg-label status-{{ svg_css_class }}">
+                                {%- if svg.type == 'success' -%}
+                                    <span class="icon">{{- svg.value|raw -}}</span>
+                                {%- else -%}
+                                    <span class="icon">
+                                        <svg class="not-found" viewbox="0 0 100 100">
+                                            <title>"{{ svg.search_ident }}" not found</title>
+                                            {# <rect width="100" height="100" rx="30" fill="none" stroke="currentColor" stroke-width="10"/>  #}
+                                        </svg>
+                                    </span>
+                                    {# <span class="log-type-badge badge badge-{{ svg_css_class }}">Not found</span> #}
+                                {%- endif -%}
+                                <span>{{ svg.search_ident }}</span>
+                            </span>
+                        </th>
+                    </tr>
+
+                    {% for log in svg.traces %}
+                        {% set css_class = 'failure' == log.type
+                            ? 'error'
+                            : 'warning' == log.type ? 'warning'
+                        %}
+
+                        <tr class="log-status-{{ css_class }}">
+                            <td class="log-timestamp">
+                                <time class="newline" title="{{ log.timestamp|date('c') }}" datetime="{{ log.timestamp|date('c') }}" data-convert-to-user-timezone data-render-as-time data-render-with-millisecond-precision>
+                                    {{- log.timestamp|date('H:i:s.v') -}}
+                                </time>
+                                <span class="log-type-badge badge badge-{{ css_class }}">
+                                    {{- css_class|default('success')|lower -}}
+                                </span>
+                            </td>
+                            <td class="font-normal">
+                                {{ profiler_dump(log.loader_class) }}
+                                <div class="log-metadata">
+
+                                    {% set has_options = log.search_options is defined and log.search_options is not empty %}
+                                    {% set has_trace = log.type == 'failure' %}
+                                    {% set has_svg   = log.type == 'success' %}
+
+
+                                    {% if has_svg %}
+                                        {% set svg_id = 'svg-' ~ log.key ~ '-' ~ loop.index0 %}
+                                        <span><button type="button" class="btn btn-link text-small sf-toggle" data-toggle-selector="#{{ svg_id }}" data-toggle-alt-content="Hide SVG code">Show SVG code</button></span>
+                                    {% endif %}
+
+                                    {% if has_options %}
+                                        {% set options_id = 'options-' ~ log.key ~ '-' ~ loop.index0 %}
+                                        <span><button type="button" class="btn btn-link text-small sf-toggle" data-toggle-selector="#{{ options_id }}" data-toggle-alt-content="Hide options">Show options</button></span>
+                                    {% endif %}
+
+                                    {% if has_trace %}
+                                        {% set exception_id = 'exception-' ~ log.key ~ '-' ~ loop.index0 %}
+                                        <span><button type="button" class="btn btn-link text-small sf-toggle" data-toggle-selector="#{{ exception_id }}" data-toggle-alt-content="Hide exception">Show exception</button></span>
+                                    {% endif %}
+
+
+                                    {% if has_svg %}
+                                        <div id="{{ svg_id }}" class="context sf-toggle-content sf-toggle-hidden">
+                                            <code>
+                                                {{- log.value|trim -}}
+                                            </code>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if has_options %}
+                                        <div id="{{ options_id }}" class="context sf-toggle-content sf-toggle-hidden">
+                                            {{ profiler_dump(log.search_options, maxDepth=1) }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if has_trace %}
+                                        <div id="{{ exception_id }}" class="context sf-toggle-content sf-toggle-hidden">
+                                            {{ profiler_dump(log.value, maxDepth=1) }}
+                                        </div>
+                                    {% endif %}
+
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+
+                {% endfor %}
+
+                </tbody>
+            </table>
+        {% endif %}
+
+        {% if collector.loaders %}
+            <h2>Loaders <small>({{ collector.loaders|length }})</small></h2>
+
+            <div class="sf-tabs">
+                {% for name in collector.loaders|keys|sort  %}
+                    {% set css_class = collector.loaderSuccessCount(name) ? 'success'
+                        : collector.loaderWarningCount(name) ? 'warning'
+                        : collector.loaderFailureCount(name) ? 'error'
+                    %}
+                    <div class="tab {{ collector.getLoaderTotalCount(name) == 0 ? 'disabled' }}">
+                        <h3 class="tab-title">{{ name|split('.')|last }} <span class="badge status-{{ css_class }}">
+                            {{-
+                                collector.loaderSuccessCount(name)
+                                    ?: collector.loaderWarningCount(name)
+                                    ?: collector.loaderFailureCount(name)
+                                    ?: collector.loaderTotalCount(name)
+                            -}}
+                        </span></h3>
+                        <div class="tab-content">
+
+                            <h4>Loader</h4>
+                            <div class="card">
+                                {{- profiler_dump(collector.loaders[name]) -}}
+                            </div>
+
+                            {% if collector.loaderTotalCount(name) == 0 %}
+                                <div class="empty">
+                                    <p>No searches were made for {{ name }} loader.</p>
+                                </div>
+                            {% else %}
+                                <h4>Metrics</h4>
+                                <div class="metric">
+                                    <span class="value">{{ collector.loaderTotalCount(name) }}</span>
+                                    <span class="label">Searches</span>
+                                </div>
+                                <div class="metric-divider"></div>
+                                <div class="metric-group">
+                                    <div class="metric">
+                                        <span class="value">{{- collector.loaderCounters(name).success -}}</span>
+                                        <span class="label">Success</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="value">{{- collector.loaderCounters(name).warning -}}</span>
+                                        <span class="label">Warning</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="value">{{- collector.loaderCounters(name).failure -}}</span>
+                                        <span class="label">Failure</span>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+    {% endif %}
+{% endblock %}
+
+{% block head %}
+    {# Optional. Here you can link to or define your own CSS and JS contents. #}
+    {# Use {{ parent() }} to extend the default styles instead of overriding them. #}
+    {{ parent() }}
+    <style type="text/css">
+        th .svg-label {
+            background: transparent;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 5px 7px;
+            overflow: hidden;
+        }
+        th .svg-label .icon {
+            display: flex;
+            margin-right: 8px;
+            text-align: center;
+            min-width: 24px;
+        }
+        th .svg-label .icon svg {
+            height: 24px;
+            width: 24px;
+            margin: 0 auto;
+        }
+        th .svg-label strong {
+            flex: 1;
+            font-size: var(--font-size-body);
+            font-weight: 500;
+        }
+
+        table.svg-logs tr > td:first-child::before {
+            content: none;
+        }
+    </style>
+{% endblock %}
