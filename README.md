@@ -164,7 +164,7 @@ See [LICENSE][] for more information.
 [issues-url]:       https://github.com/ocubom/twig-extra-bundle/issues
 [license-img]:      https://img.shields.io/github/license/ocubom/twig-extra-bundle.svg?style=for-the-badge
 [license-url]:      https://github.com/ocubom/twig-extra-bundle/blob/master/LICENSE
-[workflow-ci-img]:  https://img.shields.io/github/actions/workflow/status/ocubom/twig-extra-bundle/test.yml?branch=main&label=CI&logo=github&style=for-the-badge
+[workflow-ci-img]:  https://img.shields.io/github/actions/workflow/status/ocubom/twig-extra-bundle/ci.yml?branch=main&label=CI&logo=github&style=for-the-badge
 [workflow-ci-url]:  https://github.com/ocubom/twig-extra-bundle/actions/
 [packagist-img]:    https://img.shields.io/packagist/v/ocubom/twig-extra-bundle.svg?logo=packagist&logoColor=%23fefefe&style=for-the-badge
 [packagist-url]:    https://packagist.org/packages/ocubom/twig-extra-bundle
