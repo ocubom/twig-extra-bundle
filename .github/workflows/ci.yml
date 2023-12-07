@@ -48,6 +48,7 @@ jobs:
                     - '8.0'
                     - '7.4'
                 symfony-version:
+                    - '7.0' ## PHP-8.2
                     - '6.4' ## PHP-8.1
                     - '6.3' ## PHP-8.1
                     - '6.2' ## PHP-8.1
@@ -58,6 +59,16 @@ jobs:
                     - '' # Use default current version
                     - '1.0'
                 exclude:
+                    ## ocubom/twig-svg-extension 1.x does not support Symfony 7.0
+                    - twig-svg-extension-version: '1.0'
+                      symfony-version: '7.0'
+                    ## Symfony 7.0 requires PHP-8.2
+                    - symfony-version: '7.0'
+                      php-version: '8.1'
+                    - symfony-version: '7.0'
+                      php-version: '8.0'
+                    - symfony-version: '7.0'
+                      php-version: '7.4'
                     ## Symfony 6.4 requires PHP-8.1
                     - symfony-version: '6.4'
                       php-version: '8.0'
@@ -124,6 +135,11 @@ jobs:
                     composer global config  --ansi --no-interaction --no-plugins allow-plugins.symfony/flex true
                     composer global require --ansi --no-interaction --no-plugins --no-scripts symfony/flex
                     composer        config  --ansi --no-interaction extra.symfony.require "${{ matrix.symfony-version }}.*"
+
+            -   name: Setup Symfony aliases # Workaround till voku/simple_html_dom upgrades its dependencies
+                if: ${{ matrix.symfony-version == '7.0' }}
+                run: |
+                    composer require --ansi --no-interaction --no-plugins --no-scripts --no-update 'symfony/css-selector:${{ matrix.symfony-version }} as 6.4'
 
             -   name: Setup ocubom/twig-svg-extension version
                 if: ${{ matrix.twig-svg-extension-version != '' }}
