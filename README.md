@@ -128,7 +128,7 @@ You can also simply open an issue with the tag "enhancement".
 
 ## Authorship
 
-* Oscar Cubo Medina — [@ocubom](https://twitter.com/ocubom) — https://ocubom.page <div align="center">
+* Oscar Cubo Medina — https://ocubom.page <div align="center">
 
 See also the list of [contributors][contributors-url] who participated in this project.
 
