@@ -24,18 +24,18 @@ ocubom_twig_extra:
 
             # Local File System provider.
             file_system:
-                # Enable or disable this provider.
+                # Enable or disable Local File System provider.
                 enabled: true
-                # The paths where the Local File System files will be searched for.
+                # The paths where Local File System provider will search files.
                 paths:
                     - '%kernel.project_dir%/assets'
                     - '%kernel.project_dir%/node_modules'
 
             # FontAwesome provider.
             font_awesome:
-                # Enable or disable this provider.
+                # Enable or disable FontAwesome provider.
                 enabled: true
-                # The paths where the FontAwesome files will be searched for.
+                # The paths where FontAwesome provider will search files.
                 paths:
                     - '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-pro/svgs'
                     - '%kernel.project_dir%/node_modules/@fortawesome/fontawesome-free/svgs'
@@ -43,20 +43,18 @@ ocubom_twig_extra:
 
             # Iconify provider.
             iconify:
-                # Enable or disable this provider.
+                # Enable or disable Iconify provider.
                 enabled: true
-                # The paths where the Iconify files will be searched for.
+                # The paths where Iconify provider will search files.
                 paths:
                     - '%kernel.project_dir%/node_modules/@iconify-json/'
                     - '%kernel.project_dir%/node_modules/@iconify/json/'
                     - '%kernel.project_dir%/vendor/iconify/json/'
-
-                # Loader configuration options for Iconify
+                # Iconify custom loader options
                 loader:
                     # Enable cache on this path (empty to disable).
                     cache_dir: '%kernel.cache_dir%/iconify'
-
-                # Runtime configuration options for Iconify
+                # Iconify custom runtime configuration
                 runtime:
                     # Enable SVG Framework Server Side Rendering on classes (empty to disable).
                     svg_framework:

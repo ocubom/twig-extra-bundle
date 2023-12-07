@@ -138,28 +138,5 @@ class OcubomTwigExtraExtensionTest extends TestCase
                 'ocubom_twig_extra.http_headers_listener' => AddHttpHeadersListener::class,
             ],
         ];
-
-        yield 'svg legacy config' => [
-            function (ContainerBuilder $container) {
-                $container->registerExtension(new OcubomTwigExtraExtension());
-                $container->loadFromExtension('ocubom_twig_extra', [
-                    'html' => null,
-                    'svg' => [
-                        'search_path' => ['/dummy/path'],
-                        'fontawesome' => [
-                            'search_path' => ['/dummy/path'],
-                        ],
-                    ],
-                    'webpack_encore' => null,
-                    'http_headers' => array_values(AddHttpHeadersTest::$rules),
-                ]);
-            },
-            [
-                'ocubom_twig_extra.twig_html_extension' => HtmlExtension::class,
-                'ocubom_twig_extra.twig_svg_extension' => SvgExtension::class,
-                'ocubom_twig_extra.twig_webpack_encore_extension' => WebpackEncoreExtension::class,
-                'ocubom_twig_extra.http_headers_listener' => AddHttpHeadersListener::class,
-            ],
-        ];
     }
 }

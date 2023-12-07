@@ -189,54 +189,63 @@ class Configuration implements ConfigurationInterface
             ],
         ];
 
+        // Register providers configuration
+        $parent = $root
+            ->fixXmlConfig('provider')
+            ->children()
+            ->arrayNode('providers')
+            ->info('SVG providers.')
+            ->addDefaultsIfNotSet();
+
+        foreach ($providers as $key => $val) {
+            $provider = $parent->children()->arrayNode($key);
+
+            $children = $provider
+                ->info(sprintf('%s provider.', $val['name']))
+                ->canBeDisabled()
+                ->children();
+
+            $enabled = $provider->find('enabled');
+            assert($enabled instanceof BooleanNodeDefinition);
+            $enabled->info(sprintf('Enable or disable %s provider.', $val['name']));
+
+            // Provider paths
+            $provider->fixXmlConfig('path');
+            $children
+                ->arrayNode('paths')
+                    ->info(sprintf('The paths where the %s provider will search files.', $val['name']))
+                    ->defaultValue($val['paths'])
+                    ->prototype('scalar')->end()
+                ->end();
+
+            // Extra configuration
+            if (is_callable($val['loader'] ?? null)) {
+                $val['loader']($children->arrayNode('loader')
+                    ->info(sprintf('%s custom loader options', $val['name']))
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                );
+            }
+
+            if (is_callable($val['runtime'] ?? null)) {
+                $val['runtime']($children->arrayNode('runtime')
+                    ->info(sprintf('%s custom runtime configuration', $val['name']))
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                );
+            }
+        }
+
+        // Enable/disable providers and section on validation
         $root
-            ->beforeNormalization()
-                ->always(static function ($v) {
-                    // Convert to finders (1.x) configuration
-                    $v['finders'] = $v['finders'] ?? [];
-                    // Default finder
-                    $v['finders']['default'] = $v['finders']['default'] ?? $v['search_path'] ?? [];
-                    unset($v['search_path']);
-                    // FontAwesome
-                    $v['finders']['fontawesome'] = $v['finders']['fontawesome'] ?? $v['fontawesome']['search_path'] ?? [];
-                    unset($v['fontawesome']);
-
-                    // Convert to providers (2.x) configuration
-                    foreach ($v['finders'] as $key => $val) {
-                        if (empty($val)) {
-                            continue;
-                        }
-
-                        switch ($key) {
-                            case 'default':
-                                $v['providers']['file_system']['paths'] = $v['providers']['file_system']['paths'] ?? $val;
-                                break;
-
-                            case 'fontawesome':
-                                $v['providers']['font_awesome']['paths'] = $v['providers']['font_awesome']['paths'] ?? $val;
-                                break;
-
-                            default:
-                                $v['providers'][$key]['paths'] = $v['providers'][$key]['paths'] ?? $val;
-                                break;
-                        }
-                    }
-                    unset($v['finders']);
-
-                    return $v;
-                })
-            ->end()
             ->validate()
                 ->always(function ($v) {
-                    // Clean deprecated configuration
-                    unset($v['search_path']);
-                    unset($v['fontawesome']);
-                    unset($v['finders']);
-
                     // Enable/Disable providers
                     $enabled = 0;
                     foreach (array_keys($v['providers'] ?? []) as $key) {
+                        // Clean provider path
                         $v['providers'][$key]['paths'] = array_filter($v['providers'][$key]['paths'] ?? []);
+                        // Enabled if some path is set
                         $v['providers'][$key]['enabled'] = $v['providers'][$key]['enabled'] && count($v['providers'][$key]['paths']) > 0;
 
                         if ($v['providers'][$key]['enabled']) {
@@ -250,125 +259,17 @@ class Configuration implements ConfigurationInterface
                     return $v;
                 })
             ->end();
-
-        // Add providers (2.x) configuration
-        $parent = $root
-            ->fixXmlConfig('provider')
-            ->children()
-                ->arrayNode('providers')
-                    ->info('SVG providers.')
-                    ->addDefaultsIfNotSet();
-
-        foreach ($providers as $key => $val) {
-            $provider = $parent
-                ->children()
-                    ->arrayNode($key);
-
-            $children = $provider
-                    ->info(sprintf('%s provider.', $val['name']))
-                    ->canBeDisabled()
-                    ->children();
-
-            $enabled = $provider->find('enabled');
-            assert($enabled instanceof BooleanNodeDefinition);
-            $enabled->info('Enable or disable this provider.');
-
-            // Provider paths
-            $provider->fixXmlConfig('path');
-            $children
-                ->arrayNode('paths')
-                    ->info(sprintf('The paths where the %s files will be searched for.', $val['name']))
-                    // ->example(sprintf('["%s"]', implode('", "', $val['paths'])))
-                    ->defaultValue($val['paths'])
-                    ->prototype('scalar')->end()
-                ->end();
-
-            // Extra configuration
-            if (is_callable($val['loader'] ?? null)) {
-                $val['loader']($children->arrayNode('loader')
-                    ->info(sprintf('Loader configuration options for %s', $val['name']))
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                );
-            }
-
-            if (is_callable($val['runtime'] ?? null)) {
-                $val['runtime']($children->arrayNode('runtime')
-                    ->info(sprintf('Runtime configuration options for %s', $val['name']))
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                );
-            }
-        }
-
-        // Add finders (1.x) configuration
-        $root
-            ->fixXmlConfig('finder')
-            ->children()
-                ->arrayNode('finders')
-                    ->setDeprecated(
-                        'ocubom/twig-extra-bundle',
-                        '1.3',
-                        'The "%node%" option is deprecated. Use "providers" instead.'
-                    )
-                    ->info('The paths where SVG files will be searched for.')
-                    ->children()
-                        ->arrayNode('default')
-                            ->info('The default paths where the SVG files will be searched for.')
-                            ->example(sprintf('["%s"]', implode('", "', $providers['file_system']['paths'])))
-                            // ->defaultValue($providers['file_system']['paths'])
-                            ->prototype('scalar')->end()
-                        ->end()
-                        ->arrayNode('fontawesome')
-                            ->info('The paths where the FontAwesome files will be searched for.')
-                            ->example(sprintf('["%s"]', implode('", "', $providers['font_awesome']['paths'])))
-                            // ->defaultValue($providers['font_awesome']['paths'])
-                            ->prototype('scalar')->end()
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('search_path')
-                    ->setDeprecated(
-                        'ocubom/twig-extra-bundle',
-                        '1.2',
-                        'The "%node%" option is deprecated. Use "providers.filesystem" instead.'
-                    )
-                    ->info('The paths where the SVG files will be searched for.')
-                    ->example(sprintf('["%s"]', implode('", "', $providers['file_system']['paths'])))
-                    // ->defaultValue($providers['file_system']['paths'])
-                    ->prototype('scalar')->end()
-                ->end()
-                ->arrayNode('fontawesome')
-                    ->setDeprecated(
-                        'ocubom/twig-extra-bundle',
-                        '1.2',
-                        'The "%node%" option is deprecated. Use "providers.fontawesome" instead.'
-                    )
-                    ->info('Configuration for FontAwesome.')
-                    ->children()
-                        ->arrayNode('search_path')
-                            ->info('The paths where the FontAwesome files will be searched for.')
-                            ->example(sprintf('["%s"]', implode('", "', $providers['font_awesome']['paths'])))
-                            // ->defaultValue($providers['font_awesome']['paths'])
-                            ->prototype('scalar')->end()
-                        ->end()
-                    ->end()
-                ->end()
-            ->end();
     }
 
     private function addWebpackEncoreSection(ArrayNodeDefinition $root): void
     {
-        $defaultPaths = [
-            '%kernel.project_dir%/public/build',
-        ];
-
         $root
             ->children()
                 ->arrayNode('output_paths')
                     ->info('Paths where Symfony Encore will generate its output.')
-                    // ->example(sprintf('["%s"]', implode('", "', $defaultPaths)))
-                    ->defaultValue($defaultPaths)
+                    ->defaultValue([
+                        '%kernel.project_dir%/public/build',
+                    ])
                     ->prototype('scalar')->end()
             ->end();
     }
