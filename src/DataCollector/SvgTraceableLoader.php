@@ -22,7 +22,7 @@ class SvgTraceableLoader implements LoaderInterface
     private \ReflectionClass $class;
     private array $traces = [];
 
-    public function __construct(LoaderInterface $inner, Stopwatch $watch = null)
+    public function __construct(LoaderInterface $inner, ?Stopwatch $watch = null)
     {
         $this->inner = $inner;
         $this->class = new \ReflectionClass($this->inner);
@@ -30,7 +30,7 @@ class SvgTraceableLoader implements LoaderInterface
         $this->watch = $watch;
     }
 
-    public function resolve(string $ident, iterable $options = null): Svg
+    public function resolve(string $ident, ?iterable $options = null): Svg
     {
         try {
             if ($this->watch instanceof Stopwatch) {

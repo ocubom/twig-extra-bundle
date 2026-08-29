@@ -37,7 +37,7 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
         $this->loaders[$name] = $loader;
     }
 
-    public function collect(Request $request, Response $response, \Throwable $exception = null): void
+    public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
         // Noop. Everything is collected live by the traceable loader & cloned as late as possible.
     }
@@ -226,27 +226,27 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
         }));
     }
 
-    public function getLoaderTotalCount(string $name = null): int
+    public function getLoaderTotalCount(?string $name = null): int
     {
         return (int) array_sum($this->getLoaderCounters($name));
     }
 
-    public function getLoaderSuccessCount(string $name = null): int
+    public function getLoaderSuccessCount(?string $name = null): int
     {
         return $this->getLoaderCounters($name)['success'] ?? 0;
     }
 
-    public function getLoaderWarningCount(string $name = null): int
+    public function getLoaderWarningCount(?string $name = null): int
     {
         return $this->getLoaderCounters($name)['warning'] ?? 0;
     }
 
-    public function getLoaderFailureCount(string $name = null): int
+    public function getLoaderFailureCount(?string $name = null): int
     {
         return $this->getLoaderCounters($name)['failure'] ?? 0;
     }
 
-    public function getLoaderCounters(string $name = null): array
+    public function getLoaderCounters(?string $name = null): array
     {
         return iterator_to_array(call_user_func(function () use ($name) {
             $counters = empty($name)
