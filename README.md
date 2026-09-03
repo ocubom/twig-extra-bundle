@@ -1,90 +1,117 @@
+<h1 align="center">
+
+[
+<span id="project-title">ocubom/twig-extra-bundle</span>
+](https://github.com/ocubom/twig-extra-bundle/)
+
+</h1>
 <div align="center">
 
-Ocubom Twig Extra Bundle
-========================
-
-A Symfony bundle for custom extra Twig extensions.
-
-[![Contributors][contributors-img]][contributors-url]
-[![Forks][forks-img]][forks-url]
-[![Stargazers][stars-img]][stars-url]
-[![Issues][issues-img]][issues-url]
-[![License][license-img]][license-url]
+_A Symfony bundle for custom extra Twig extensions._
 
 [![Version][packagist-img]][packagist-url]
-[![CI][workflow-ci-img]][workflow-ci-url]
-[![Code Quality][quality-img]][quality-url]
+[![PHP version][packagist-php-img]][packagist-php-url]
+[![License][license-img]][license-url]
+[![Build status][workflow-build-img]][workflow-build-url]
 [![Coverage][coverage-img]][coverage-url]
 
-[**Explore the docs »**][Documentation]
+[![Downloads][packagist-dl-img]][packagist-dl-url]
+[![Issues][issues-img]][issues-url]
+[![Stargazers][stars-img]][stars-url]
+[![Forks][forks-img]][forks-url]
+[![Contributors][contributors-img]][contributors-url]
 
+[**Explore the docs »**](https://github.com/ocubom/twig-extra-bundle/)
+·
 [Report Bug](https://github.com/ocubom/twig-extra-bundle/issues)
 ·
 [Request Feature](https://github.com/ocubom/twig-extra-bundle/issues)
 
-</div>
-
+<table align="center"><tr><td align="left">
 <details>
-  <summary>Contents</summary>
+<summary id="toc">Table of Contents</summary>
 
-* [About SVG Bundle](#about-twig-extra-bundle)
+* [About ocubom/twig-extra-bundle](#about-ocubomtwig-extra-bundle)
 * [Getting Started](#getting-started)
+    * [Prerequisites](#prerequisites)
     * [Installation](#installation)
-    * [Usage](#usage)
+* [Usage](#usage)
 * [Roadmap](#roadmap)
-* [Contributing](#contributing)
+* [Support](#support)
 * [Authorship](#authorship)
 * [License](#license)
 
 </details>
+</td></tr></table>
 
-## About Twig Extra Bundle
+</div>
 
-[Ocubom Twig Extra Bundle](https://github.com/ocubom/twig-extra-bundle) is a [Symfony Bundle][] that allows the use of several custom Twig extensions with almost no configuration.
-This suite started as an internal class based on [nochso/html-compress-twig][] to allow the use of [wyrihaximus/html-compress][] with Twig 3.0.
-This class used to be embedded into several projects.
-Over time, each project slightly adapted its version, resulting in fragmented development and difficult maintenance.
-Therefore, the development is unified in an extension which is made public in case it is useful for other projects.
+## About ocubom/twig-extra-bundle
 
-Along with the extension a bundle was created to easily integrate it into a Symfony project.
-The bundle evolves to configure other developed extensions, following the [twig/extra-bundle][] philosophy.
+[ocubom/twig-extra-bundle](https://github.com/ocubom/twig-extra-bundle/) allows
+the use of several custom Twig extensions with zero configuration.
+
+
+This suite started as an internal helper based on [nochso/html-compress-twig][]
+to bring [wyrihaximus/html-compress][] support to Twig 3.0.
+Over time, as several projects embedded and modified this class independently,
+development became fragmented and difficult to maintain.
+To resolve this, several standalone open-source extensions were created to
+unify those efforts.
+
+This repository provides a Symfony bundle to easily integrate all those
+extensions into a Symfony project.
+The bundle continues to evolve to configure additional custom extensions,
+following the philosophy of [twig/extra-bundle][].
 
 ## Getting Started
 
+### Prerequisites
+
+* **PHP** >= 7.4 (tested up to 8.5)
+* **Composer** >= 2.0
+
 ### Installation
 
-Make sure Composer is installed globally, as explained in the [installation chapter](https://getcomposer.org/doc/00-intro.md) of the Composer documentation.
+Install the package via [composer][]:
 
-#### Applications that use Symfony Flex
-
-Open a command console, enter your project directory and execute:
-
-```console
+```sh
 composer require ocubom/twig-extra-bundle
 ```
 
-#### Applications that don't use Symfony Flex
+You must also install the Twig extensions you want to use:
 
-##### Step 1: Download the Bundle
-
-Open a command console, enter your project directory and execute the
-following command to download the latest stable version of this bundle:
-
-```console
-composer require ocubom/twig-extra-bundle
-```
-
-You must also install the Twig extensions to be used:
-
-```console
+```sh
+# For HTML filters (`html_attributes`, `html_minify`)
 composer require ocubom/twig-html-extension
+
+# For SVG filters (`svg`, `svg_symbols`, `fontawesome`, `iconify`)
 composer require ocubom/twig-svg-extension
 ```
 
-##### Step 2: Enable the Bundle
+#### Optional Dependencies
 
-Then, enable the bundle by adding it to the list of registered bundles
-in the `config/bundles.php` file of your project:
+You can install additional packages to plug extra functionality:
+
+* For HTML minification ([ocubom/twig-html-extension][]):
+
+```sh
+composer require matthiasmullie/minify  ## scripts & styles
+composer require wikimedia/minify       ## scripts & styles
+composer require tedivm/jshrink         ## scripts only
+composer require tubalmartin/cssmin     ## styles only
+```
+
+* For SVG sanitization ([ocubom/twig-svg-extension][]):
+
+```sh
+composer require enshrined/svg-sanitize
+```
+
+## Usage
+
+Enable the bundle by adding it to the list of registered bundles in the
+`config/bundles.php` file of your project:
 
 ```php
 // config/bundles.php
@@ -95,8 +122,6 @@ return [
 ];
 ```
 
-### Usage
-
 Just create the file `config/packages/ocubom_twig_extra.yaml` using the configuration reference:
 
 ```console
@@ -105,70 +130,69 @@ bin/console config:dump-reference ocubom_twig_extra
 
 Or you can use the [example configuration][] provided.
 
-> **Note**
+> [!NOTE]
 > This configuration will be installed if your project uses [endroid/installer][]
 
 ## Roadmap
 
-See the [open issues](https://github.com/ocubom/twig-extra-bundle/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/ocubom/twig-extra-bundle/issues) for a list of proposed features (and known issues).
 
-## Contributing
+- [Top Feature Requests](https://github.com/ocubom/twig-extra-bundle/issues?q=label%3Aenhancement+is%3Aopen+sort%3Areactions-%2B1-desc)
+- [Top Bugs](https://github.com/ocubom/twig-extra-bundle/issues?q=is%3Aissue+is%3Aopen+label%3Abug+sort%3Areactions-%2B1-desc)
+- [Newest Bugs](https://github.com/ocubom/twig-extra-bundle/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create.
-Any contributions you make are **greatly appreciated**.
+## Support
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request.
-You can also simply open an issue with the tag "enhancement".
-
-1. Fork the Project.
-2. Create your Feature Branch (`git checkout -b feature/your-feature`).
-3. Commit your Changes (`git commit -m 'Add your-feature'`).
-4. Push to the Branch (`git push origin feature/your-feature`).
-5. Open a Pull Request.
+Reach out to the maintainer at [GitHub Issues](https://github.com/ocubom/twig-extra-bundle/issues/new?assignees=&labels=question&template=04_SUPPORT_QUESTION.md&title=support%3A+).
 
 ## Authorship
 
-* Oscar Cubo Medina — https://ocubom.page <div align="center">
+[Oscar Cubo Medina](https://github.com/ocubom) — https://ocubom.github.io
 
-See also the list of [contributors][contributors-url] who participated in this project.
+For a full list of all authors and contributors, see [the contributors page](https://github.com/ocubom/twig-extra-bundle/contributors).
 
 ## License
 
 Distributed under the MIT License.
+
 See [LICENSE][] for more information.
 
 
-[Documentation]: https://github.com/ocubom/twig-extra-bundle/blob/main/docs/index.md
 [LICENSE]: https://github.com/ocubom/twig-extra-bundle/blob/master/LICENSE
 [example configuration]: https://github.com/ocubom/twig-extra-bundle/blob/main/.install/symfony/config/packages/ocubom_twig_extra.yaml
 
 <!-- Links -->
 [composer]: https://getcomposer.org/
 [endroid/installer]: https://packagist.org/packages/endroid/installer
-[Symfony]: https://symfony.com/
-[Symfony Bundle]: https://symfony.com/doc/current/bundles.html
 
 <!-- Packagist links -->
 [nochso/html-compress-twig]: https://packagist.org/packages/nochso/html-compress-twig
 [twig/extra-bundle]: https://packagist.org/packages/twig/extra-bundle
 [wyrihaximus/html-compress]: https://packagist.org/packages/wyrihaximus/html-compress
+[ocubom/twig-html-extension]: https://packagist.org/packages/ocubom/twig-html-extension
+[ocubom/twig-svg-extension]: https://packagist.org/packages/ocubom/twig-svg-extension
+
 
 <!-- Project Badges -->
-[contributors-img]: https://img.shields.io/github/contributors/ocubom/twig-extra-bundle.svg?style=for-the-badge
-[contributors-url]: https://github.com/ocubom/twig-extra-bundle/graphs/contributors
-[forks-img]:        https://img.shields.io/github/forks/ocubom/twig-extra-bundle.svg?style=for-the-badge
-[forks-url]:        https://github.com/ocubom/twig-extra-bundle/network/members
-[stars-img]:        https://img.shields.io/github/stars/ocubom/twig-extra-bundle.svg?style=for-the-badge
-[stars-url]:        https://github.com/ocubom/twig-extra-bundle/stargazers
-[issues-img]:       https://img.shields.io/github/issues/ocubom/twig-extra-bundle.svg?style=for-the-badge
-[issues-url]:       https://github.com/ocubom/twig-extra-bundle/issues
-[license-img]:      https://img.shields.io/github/license/ocubom/twig-extra-bundle.svg?style=for-the-badge
-[license-url]:      https://github.com/ocubom/twig-extra-bundle/blob/master/LICENSE
-[workflow-ci-img]:  https://img.shields.io/github/actions/workflow/status/ocubom/twig-extra-bundle/ci.yml?branch=main&label=CI&logo=github&style=for-the-badge
-[workflow-ci-url]:  https://github.com/ocubom/twig-extra-bundle/actions/
-[packagist-img]:    https://img.shields.io/packagist/v/ocubom/twig-extra-bundle.svg?logo=packagist&logoColor=%23fefefe&style=for-the-badge
-[packagist-url]:    https://packagist.org/packages/ocubom/twig-extra-bundle
-[coverage-img]:     https://img.shields.io/scrutinizer/coverage/g/ocubom/twig-extra-bundle.svg?logo=scrutinizer&logoColor=fff&style=for-the-badge
-[coverage-url]:     https://scrutinizer-ci.com/g/ocubom/twig-extra-bundle/code-structure/main/code-coverage
-[quality-img]:      https://img.shields.io/scrutinizer/quality/g/ocubom/twig-extra-bundle.svg?logo=scrutinizer&logoColor=fff&style=for-the-badge
-[quality-url]:      https://scrutinizer-ci.com/g/ocubom/twig-extra-bundle/
+[contributors-img]:     https://img.shields.io/github/contributors/ocubom/twig-extra-bundle.svg?style=for-the-badge&color=blue
+[contributors-url]:     https://github.com/ocubom/twig-extra-bundle/graphs/contributors
+[forks-img]:            https://img.shields.io/github/forks/ocubom/twig-extra-bundle.svg?style=for-the-badge
+[forks-url]:            https://github.com/ocubom/twig-extra-bundle/network/members
+[issues-img]:           https://img.shields.io/github/issues/ocubom/twig-extra-bundle.svg?style=for-the-badge
+[issues-url]:           https://github.com/ocubom/twig-extra-bundle/issues
+[license-img]:          https://img.shields.io/github/license/ocubom/twig-extra-bundle.svg?style=for-the-badge&logo=opensourceinitiative&logoColor=white
+[license-url]:          https://github.com/ocubom/twig-extra-bundle/blob/main/LICENSE
+[stars-img]:            https://img.shields.io/github/stars/ocubom/twig-extra-bundle.svg?style=for-the-badge
+[stars-url]:            https://github.com/ocubom/twig-extra-bundle/stargazers
+[workflow-build-img]:   https://img.shields.io/github/actions/workflow/status/ocubom/twig-extra-bundle/ci.yaml?style=for-the-badge&logo=githubactions&branch=main&logoColor=white
+[workflow-build-url]:   https://github.com/ocubom/twig-extra-bundle/actions/
+
+[packagist-img]:        https://img.shields.io/packagist/v/ocubom/twig-extra-bundle.svg?style=for-the-badge&logo=packagist&logoColor=white
+[packagist-url]:        https://packagist.org/packages/ocubom/twig-extra-bundle
+[packagist-php-img]:    https://img.shields.io/packagist/dependency-v/ocubom/twig-extra-bundle/php?style=for-the-badge&logo=php&logoColor=white
+[packagist-php-url]:    https://packagist.org/packages/ocubom/twig-extra-bundle
+[packagist-dl-img]:     https://img.shields.io/packagist/dt/ocubom/twig-extra-bundle?style=for-the-badge
+[packagist-dl-url]:     https://packagist.org/packages/ocubom/twig-extra-bundle
+
+[coverage-img]:         https://img.shields.io/codecov/c/github/ocubom/twig-extra-bundle?style=for-the-badge&logo=codecov&logoColor=white
+[coverage-url]:         https://codecov.io/github/ocubom/twig-extra-bundle/
