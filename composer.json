@@ -33,6 +33,7 @@
         }
     },
     "require": {
+        "php": ">=7.4",
         "symfony/config": "^5.4|^6.0|^7.0|^8.0",
         "symfony/dependency-injection": "^5.4|^6.0|^7.0|^8.0",
         "symfony/http-kernel": "^5.4|^6.0|^7.0|^8.0",
@@ -42,12 +43,15 @@
         "friendsofphp/php-cs-fixer": "*",
         "ocubom/twig-html-extension": "^1.0|^2.0",
         "ocubom/twig-svg-extension": "^1.0|^2.0",
+        "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpstan/phpstan-phpunit": "^2.0",
         "symfony/phpunit-bridge": "^6.1|^7.0|^8.0",
         "symfony/webpack-encore-bundle": "^1.16|^2.0"
     },
-    "scripts": {
-        "fix": "./vendor/bin/php-cs-fixer fix",
-        "test": "./vendor/bin/simple-phpunit"
+    "suggest": {
+        "ocubom/twig-html-extension": "Allows using Twig HTML extension",
+        "ocubom/twig-svg-extension": "Allows using Twig SVG extension"
     },
     "config": {
         "allow-plugins": {

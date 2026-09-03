@@ -26,8 +26,10 @@ return (new PhpCsFixer\Config())
             ->ignoreDotFiles(true)
             ->ignoreVCS(true)
             ->ignoreVCSIgnored(true)
-            ->append(['.github/matrix.php'])
-            ->append([__FILE__])
+            ->append([
+                '.github/matrix.php',
+                __FILE__,
+            ])
     )
     ->setRules([
         // Rulesets

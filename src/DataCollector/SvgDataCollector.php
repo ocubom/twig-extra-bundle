@@ -58,9 +58,10 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
             ],
         ];
 
+        // Analyze traces generating data structure
         foreach ($this->getLogTraces() as $trace) {
             // Initialize loader struct
-            $data['loaders']['instances'][$trace['loader_name']] = $data['loaders']['instances'][$trace['loader_name']] ?? [
+            $data['loaders']['instances'][$loader = $trace['loader_name']] ??= [
                 'class' => $trace['loader_class'],
                 'counters' => [
                     'success' => 0,
@@ -71,15 +72,16 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
 
             // Update loader counters
             ++$data['loaders']['counters'][$trace['type']];
-            ++$data['loaders']['instances'][$trace['loader_name']]['counters'][$trace['type']];
+            ++$data['loaders']['instances'][$loader]['counters'][$trace['type']];
 
-            // Generate a unique key for the search
+            // Generate a unique key for the search (not considering options)
             $key = sha1($trace['search_ident']);
 
-            $data['svg']['instances'][$key] = $data['svg']['instances'][$key] ?? [
+            $data['svg']['instances'][$key] ??= [
                 // Metadata
                 'key' => $key,
-                'timestamp' => $trace['ts1']->format('Y-m-d\\TH:i:s.uP'),
+                // Datetime
+                'timestamp' => $trace['ts0']->format('Y-m-d\\TH:i:s.uP'),
                 'ts0' => $trace['ts0'],
                 'ts1' => $trace['ts1'],
                 // Search input
@@ -103,25 +105,24 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
                     // Search output
                     'value' => $trace['value'],
                     'type' => $trace['type'],
+                    'level' => $trace['level'],
                 ]);
             }
 
             $traceKey = sha1(serialize([
                 $trace['search_ident'],
                 $trace['search_options'],
-                $trace['loader_name'],
+                $loader,
             ]));
 
             $data['svg']['instances'][$key]['traces'][$traceKey] = array_merge($trace, [
                 'key' => $traceKey,
-                'timestamp' => $trace['ts1']->format('Y-m-d\\TH:i:s.uP'),
+                'timestamp' => $trace['ts0']->format('Y-m-d\\TH:i:s.uP'),
             ]);
         }
 
         uasort($data['svg']['instances'], function ($x, $y) {
-            return strnatcasecmp($x['search_ident'], $y['search_ident'])
-                ?: $x['ts1'] <=> $y['ts1']
-                ?: strnatcasecmp($x['loader_name'], $y['loader_name']);
+            return strnatcasecmp($x['search_ident'], $y['search_ident']);
         });
 
         $data['svg']['counters'] = array_reduce(
@@ -141,6 +142,19 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
         $this->data = $this->cloneVar($data);
     }
 
+    /**
+     * @return iterable<array{
+     *     loader_class: ClassStub,
+     *     loader_name: string|int,
+     *     type: string,
+     *     level: int|false,
+     *     value: \Throwable|string,
+     *     search_ident: string,
+     *     search_options: mixed,
+     *     ts0: \DateTimeImmutable,
+     *     ts1: \DateTimeImmutable
+     * }>
+     */
     private function getLogTraces(): iterable
     {
         $logs = [];
@@ -168,14 +182,13 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
             }
         }
 
-        usort($logs, function ($x, $y) {
-            return $x['ts1'] <=> $y['ts1']
-                ?: strnatcasecmp($x['loader_name'], $y['loader_name']);
+        usort($logs, static function (array $x, array $y): int {
+            return $x['ts0'] <=> $y['ts0']
+                ?: $x['ts1'] <=> $y['ts1']
+                    ?: strnatcasecmp((string) $x['loader_name'], (string) $y['loader_name']);
         });
 
-        foreach ($logs as $trace) {
-            yield sha1($trace['search_ident']) => $trace;
-        }
+        yield from $logs;
     }
 
     public function reset(): void
@@ -192,6 +205,20 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
         return 'svg';
     }
 
+    /**
+     * @return array<string, array{
+     *     key: string,
+     *     timestamp: string,
+     *     ts0: \DateTimeImmutable,
+     *     ts1: \DateTimeImmutable,
+     *     search_ident: string,
+     *     value: mixed,
+     *     type: string,
+     *     level: int|false,
+     *     traces: array<string, mixed>,
+     *     counters: array<string, int>
+     * }>
+     */
     public function getSvg(): array
     {
         return iterator_to_array($this->data['svg']['instances']);
@@ -217,6 +244,9 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
         return $this->data['svg']['counters']['failure'] ?? 0;
     }
 
+    /**
+     * @return array<string, ClassStub>
+     */
     public function getLoaders(): array
     {
         return iterator_to_array(call_user_func(function () {
@@ -246,6 +276,9 @@ class SvgDataCollector extends DataCollector implements LateDataCollectorInterfa
         return $this->getLoaderCounters($name)['failure'] ?? 0;
     }
 
+    /**
+     * @return array<string, int>
+     */
     public function getLoaderCounters(?string $name = null): array
     {
         return iterator_to_array(call_user_func(function () use ($name) {

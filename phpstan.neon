@@ -1,0 +1,18 @@
+includes:
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - src/
+        - tests/
+    ignoreErrors:
+        -
+            identifier: class.notFound
+            message: '#Class Ocubom\\Twig\\Extension\\.*\\Finder not found\.#'
+            path: src/DependencyInjection/OcubomTwigExtraExtension.php
+        -
+            identifier: class.notFound
+            message: '#Class Ocubom\\Twig\\Extension\\Svg\\Library\\FontAwesomeRuntime not found\.#'
+            path: src/DependencyInjection/OcubomTwigExtraExtension.php

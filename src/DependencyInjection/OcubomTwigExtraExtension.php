@@ -58,6 +58,9 @@ class OcubomTwigExtraExtension extends Extension
         $this->loadHttpHeaders($container, $config['http_headers']);
     }
 
+    /**
+     * @param array<string,mixed> $config
+     */
     private function loadHttpHeaders(ContainerBuilder $container, array $config): void
     {
         // Filter enabled header rules
@@ -73,6 +76,9 @@ class OcubomTwigExtraExtension extends Extension
         }
     }
 
+    /**
+     * @param array<string,mixed> $config
+     */
     private function loadHtml(ContainerBuilder $container, array $config): void
     {
         $container->register('ocubom_twig_extra.twig_html_extension', HtmlExtension::class)
@@ -97,7 +103,9 @@ class OcubomTwigExtraExtension extends Extension
             );
     }
 
-    /** @psalm-suppress UndefinedClass */
+    /**
+     * @param array<string,mixed> $config
+     */
     private function loadSvg(ContainerBuilder $container, array $config): void
     {
         if (empty($config['providers'])) {
@@ -119,6 +127,9 @@ class OcubomTwigExtraExtension extends Extension
         }
     }
 
+    /**
+     * @param array<string,mixed> $config
+     */
     private function loadSvgLoaders(ContainerBuilder $container, array $config): void
     {
         // Register global loader
@@ -209,7 +220,9 @@ class OcubomTwigExtraExtension extends Extension
         }
     }
 
-    /** @psalm-suppress UndefinedClass */
+    /**
+     * @param array<string,mixed> $config
+     */
     private function loadSvgFinders(ContainerBuilder $container, array $config): void
     {
         foreach ($config['providers'] as $name => $provider) {
@@ -269,6 +282,9 @@ class OcubomTwigExtraExtension extends Extension
         }
     }
 
+    /**
+     * @param array<string,mixed> $config
+     */
     private function loadWebpackEncore(ContainerBuilder $container, array $config): void
     {
         $container->register('ocubom_twig_extra.twig_webpack_encore_extension', WebpackEncoreExtension::class)

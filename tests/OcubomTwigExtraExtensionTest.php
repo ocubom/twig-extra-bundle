@@ -22,8 +22,13 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 
 class OcubomTwigExtraExtensionTest extends TestCase
 {
-    /** @dataProvider provideConfiguration */
-    public function testConfiguration($builder, $expected)
+    /**
+     * @param callable(ContainerBuilder): void $builder
+     * @param array<string, class-string|null> $expected
+     *
+     * @dataProvider provideConfiguration
+     */
+    public function testConfiguration(callable $builder, array $expected): void
     {
         $container = new ContainerBuilder(new ParameterBag([
             'kernel.debug' => false,
@@ -47,7 +52,10 @@ class OcubomTwigExtraExtensionTest extends TestCase
         }
     }
 
-    public function provideConfiguration()
+    /**
+     * @return iterable<string, array{0: callable(ContainerBuilder): void, 1: array<string, class-string|null>}>
+     */
+    public function provideConfiguration(): iterable
     {
         yield 'default' => [
             function (ContainerBuilder $container) {

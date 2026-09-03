@@ -1,6 +1,5 @@
 <?php
 
-
 declare(strict_types=1);
 
 /*
@@ -211,7 +210,7 @@ class MatrixGenerator implements IteratorAggregate
             }
 
             return json_decode($json, true, 512, \JSON_THROW_ON_ERROR) ?: [];
-        } catch (JsonException) {
+        } catch (JsonException $e) {
             return [];
         }
     }
@@ -257,7 +256,6 @@ class MatrixGenerator implements IteratorAggregate
     }
 }
 
-echo json_encode(
-    ['include' => iterator_to_array(new MatrixGenerator())],
-    \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR
-);
+echo json_encode([
+    'include' => iterator_to_array(new MatrixGenerator()),
+], \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR);

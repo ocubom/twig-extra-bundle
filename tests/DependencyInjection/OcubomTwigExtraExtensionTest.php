@@ -35,14 +35,11 @@ use Twig\Loader\ArrayLoader;
 
 class OcubomTwigExtraExtensionTest extends TestCase
 {
-    private $kernel;
+    private ?KernelInterface $kernel;
 
-    /**
-     * @var Container
-     */
-    private $container;
+    private ?ContainerBuilder $container;
 
-    public static function assertSaneContainer(Container $container)
+    public static function assertSaneContainer(Container $container): void
     {
         $removedIds = $container->getRemovedIds();
         $errors = [];
@@ -101,7 +98,7 @@ class OcubomTwigExtraExtensionTest extends TestCase
         $this->kernel = null;
     }
 
-    public function testDefaultConfig()
+    public function testDefaultConfig(): void
     {
         $extension = new OcubomTwigExtraExtension();
         $extension->load([[]], $this->container);
@@ -141,7 +138,7 @@ class OcubomTwigExtraExtensionTest extends TestCase
         self::assertSaneContainer($this->getCompiledContainer());
     }
 
-    private function getCompiledContainer()
+    private function getCompiledContainer(): ContainerBuilder
     {
         if ($this->container->has('web_profiler.debug_toolbar')) {
             $this->container->getDefinition('web_profiler.debug_toolbar')->setPublic(true);

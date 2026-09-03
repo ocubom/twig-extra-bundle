@@ -19,55 +19,77 @@ class SvgTraceableLoader implements LoaderInterface
 {
     private LoaderInterface $inner;
     private ?Stopwatch $watch;
+
+    /**
+     * @var \ReflectionClass<LoaderInterface>
+     */
     private \ReflectionClass $class;
+
+    /**
+     * @var list<array{
+     *     ts0: \DateTimeImmutable,
+     *     ts1: \DateTimeImmutable,
+     *     loader_class: string,
+     *     search_ident: string,
+     *     search_options: ?iterable<mixed>,
+     *     value: Svg|\Throwable|null
+     * }>
+     */
     private array $traces = [];
 
     public function __construct(LoaderInterface $inner, ?Stopwatch $watch = null)
     {
         $this->inner = $inner;
-        $this->class = new \ReflectionClass($this->inner);
-
         $this->watch = $watch;
+        $this->class = new \ReflectionClass($this->inner);
     }
 
     public function resolve(string $ident, ?iterable $options = null): Svg
     {
+        $this->traces[$idx = count($this->traces)] = [
+            // Metadata
+            'ts0' => $now = new \DateTimeImmutable(),
+            'ts1' => $now,
+            // Loader
+            'loader_class' => $loader = $this->class->getShortName(),
+            // Search input
+            'search_ident' => $ident,
+            'search_options' => $options,
+            // Search output
+            'value' => null,
+        ];
+
+        if ($this->watch instanceof Stopwatch) {
+            $this->watch->start($loader, 'ocubom.svg_loader');
+        }
+
         try {
-            if ($this->watch instanceof Stopwatch) {
-                $this->watch->start($this->class->getShortName(), 'ocubom.svg_loader');
-            }
-
-            $this->traces[$idx = count($this->traces)] = [
-                // Metadata
-                'ts0' => \DateTimeImmutable::createFromFormat('0.u00 U', microtime()),
-                'ts1' => \DateTimeImmutable::createFromFormat('0.u00 U', microtime()),
-                // Loader
-                'loader_class' => $this->class->getName(),
-                // Search input
-                'search_ident' => $ident,
-                'search_options' => $options,
-                // Search output
-                'value' => null,
-            ];
-
             return $this->traces[$idx]['value'] = $this->inner->resolve($ident, $options);
         } catch (\Throwable $err) {
             // Register error as "returned" value
-            $idx = count($this->traces) - 1;
             $this->traces[$idx]['value'] = $err;
 
             throw $err;
         } finally {
             // Update finish timestamp
-            $idx = count($this->traces) - 1;
-            $this->traces[$idx]['ts1'] = \DateTimeImmutable::createFromFormat('0.u00 U', microtime());
+            $this->traces[$idx]['ts1'] = new \DateTimeImmutable();
 
             if ($this->watch instanceof Stopwatch) {
-                $this->watch->stop($this->class->getShortName());
+                $this->watch->stop($loader);
             }
         }
     }
 
+    /**
+     * @return list<array{
+     *     ts0: \DateTimeImmutable,
+     *     ts1: \DateTimeImmutable,
+     *     loader_class: string,
+     *     search_ident: string,
+     *     search_options: ?iterable<mixed>,
+     *     value: Svg|\Throwable|null
+     * }>
+     */
     public function getTraces(): array
     {
         return $this->traces;

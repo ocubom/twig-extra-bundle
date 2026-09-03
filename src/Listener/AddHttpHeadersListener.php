@@ -18,8 +18,28 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 class AddHttpHeadersListener implements EventSubscriberInterface
 {
+    /**
+     * @var list<array{
+     *      enabled: bool,
+     *      name: string,
+     *      pattern?: string,
+     *      value?: string,
+     *      replace?: string,
+     *      formats?: list<string>
+     *  }>
+     */
     protected array $rules = [];
 
+    /**
+     * @param array{
+     *       enabled: bool,
+     *       name: string,
+     *       pattern?: string,
+     *       value?: string,
+     *       replace?: string,
+     *       formats?: list<string>
+     *   } ...$rules
+     */
     public function __construct(array ...$rules)
     {
         $this->rules = \func_get_args() ?: [];
@@ -61,6 +81,16 @@ class AddHttpHeadersListener implements EventSubscriberInterface
         ];
     }
 
+    /**
+     * @param array{
+     *     enabled: bool,
+     *     name: string,
+     *     pattern?: string,
+     *     value?: string,
+     *     replace?: string,
+     *     formats?: list<string>
+     * } $rule
+     */
     public function applyRule(array $rule, string $content, ResponseHeaderBag $headers, string $format): string
     {
         if (!$rule['enabled'] || (isset($rule['formats']) && !\in_array($format, $rule['formats'], true))) {

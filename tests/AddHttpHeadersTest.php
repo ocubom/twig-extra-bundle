@@ -21,7 +21,17 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 class AddHttpHeadersTest extends TestCase
 {
-    public static $rules = [
+    /**
+     * @var array<string, array{
+     *     name: string,
+     *     pattern: string,
+     *     value: string,
+     *     replace: string,
+     *     formats: list<string>,
+     *     enabled: bool
+     * }>
+     */
+    public static array $rules = [
         'x-robots' => [
             'name' => 'X-Robots-Tag',
             'pattern' => '@[\p{Zs}]*<meta\s+(?:name="robots"\s+content="([^"]+)"|content="([^"]+)"\s+name="robots")\s*/?\s*>\p{Zs}*\n?@i',
@@ -40,8 +50,20 @@ class AddHttpHeadersTest extends TestCase
         ],
     ];
 
-    /** @dataProvider provideResponseEvent */
-    public function testAddHeaders(ResponseEvent $event, array $rules, array $expected, string $body)
+    /**
+     * @param list<array{
+     *          name: string,
+     *          pattern?: string,
+     *          value: string,
+     *          replace: string,
+     *          formats: list<string>,
+     *          enabled: bool
+     *      }> $rules
+     * @param array<string, string> $expected
+     *
+     * @dataProvider provideResponseEvent
+     */
+    public function testAddHeaders(ResponseEvent $event, array $rules, array $expected, string $body): void
     {
         (new AddHttpHeadersListener(...$rules))->onKernelResponse($event);
 
@@ -56,7 +78,22 @@ class AddHttpHeadersTest extends TestCase
         $this->assertEquals($body, $event->getResponse()->getContent());
     }
 
-    public function provideResponseEvent()
+    /**
+     * @return iterable<string, array{
+     *     0: ResponseEvent,
+     *     1: list<array{
+     *         name: string,
+     *         pattern?: string,
+     *         value: string,
+     *         replace: string,
+     *         formats: list<string>,
+     *         enabled: bool
+     *     }>,
+     *     2: array<string, string>,
+     *     3: string
+     * }>
+     */
+    public function provideResponseEvent(): iterable
     {
         $kernel = $this->getMockBuilder(HttpKernel::class)
             ->disableOriginalConstructor()

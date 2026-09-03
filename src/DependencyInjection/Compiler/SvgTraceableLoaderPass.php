@@ -36,8 +36,10 @@ class SvgTraceableLoaderPass implements CompilerPassInterface
 
     private function addLoaderToCollector(string $ident, ContainerBuilder $container): void
     {
-        /** @var class-string $class */
         $class = $container->getDefinition($ident)->getClass();
+        if (null === $class) {
+            return;
+        }
         $class = new \ReflectionClass($class);
 
         // Convert to traceable loaders

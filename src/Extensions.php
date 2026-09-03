@@ -25,7 +25,6 @@ final class Extensions
             'class_name' => 'OcubomHtmlExtension',
             'package' => 'ocubom/twig-html-extension',
             'filters' => ['html_attributes', 'html_minify', 'html_compress'],
-            'functions' => [],
         ],
         'svg' => [
             'name' => 'svg',
@@ -40,11 +39,13 @@ final class Extensions
             'class' => EntryFilesTwigExtension::class, // Use the official twig extension
             'class_name' => 'OcubomWebpackEncoreExtension',
             'package' => 'symfony/webpack-encore-bundle', // Needed to enable this
-            'filters' => [],
             'functions' => ['encore_entry_css_source', 'encore_entry_js_source'],
         ],
     ];
 
+    /**
+     * @return array<string, class-string>
+     */
     public static function getClasses(): array
     {
         return array_column(self::EXTENSIONS, 'class', 'name');
@@ -53,7 +54,7 @@ final class Extensions
     public static function suggestFilter(string $name): bool
     {
         foreach (self::EXTENSIONS as $extension) {
-            if (isset($extension['filters']) && in_array($name, $extension['filters'])) {
+            if (in_array($name, $extension['filters'] ?? [])) {
                 throw new SyntaxError(sprintf('The "%s" filter is part of the %s, which is not installed/enabled; try running "composer require %s".', $name, $extension['class_name'], $extension['package']));
             }
         }
@@ -64,7 +65,7 @@ final class Extensions
     public static function suggestFunction(string $name): bool
     {
         foreach (self::EXTENSIONS as $extension) {
-            if (isset($extension['functions']) && in_array($name, $extension['functions'])) {
+            if (in_array($name, $extension['functions'] ?? [])) {
                 throw new SyntaxError(sprintf('The "%s" function is part of the %s, which is not installed/enabled; try running "composer require %s".', $name, $extension['class_name'], $extension['package']));
             }
         }

@@ -46,14 +46,12 @@ class Configuration implements ConfigurationInterface
         bool $canBeDisabled = true
     ): ArrayNodeDefinition {
         $node = $root->children()->arrayNode($name);
-        assert($node instanceof ArrayNodeDefinition);
 
         $node->info(sprintf('Twig %s Extension', ucfirst($name)));
         $node->{$canBeDisabled ? 'canBeDisabled' : 'canBeEnabled'}();
 
-        $enabled = $node->find('enabled');
-        assert($enabled instanceof BooleanNodeDefinition);
-        $enabled->info('Enable or disable this extension');
+        $node->find('enabled')
+            ->info('Enable or disable this extension');
 
         return $node;
     }
