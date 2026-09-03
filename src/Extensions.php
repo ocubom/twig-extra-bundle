@@ -24,7 +24,7 @@ final class Extensions
             'class' => HtmlExtension::class,
             'class_name' => 'OcubomHtmlExtension',
             'package' => 'ocubom/twig-html-extension',
-            'filters' => ['html_attributes', 'html_compress'],
+            'filters' => ['html_attributes', 'html_minify', 'html_compress'],
             'functions' => [],
         ],
         'svg' => [

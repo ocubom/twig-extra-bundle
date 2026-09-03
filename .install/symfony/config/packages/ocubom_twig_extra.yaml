@@ -7,11 +7,11 @@ ocubom_twig_extra:
         enabled: true
 
         # Compress HTML output
-        compression:
-            # Force compression
+        minify:
+            # Force minification
             force: false
-            # The level of compression to use
-            level: smallest # One of "none"; "fastest"; "normal"; "smallest"
+            # The minification preset to use
+            preset: smallest # One of "none"; "fast"; "base"; "size"
 
     # Twig Svg Extension
     svg:

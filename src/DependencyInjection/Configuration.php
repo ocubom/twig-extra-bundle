@@ -114,7 +114,66 @@ class Configuration implements ConfigurationInterface
     {
         $children = $root
             ->children()
+            ->arrayNode('minify')
+            ->info('Minify HTML output')
+            ->addDefaultsIfNotSet()
+            ->children();
+
+        $children
+            ->booleanNode('force')
+            ->info('Force minification')
+            ->defaultFalse()
+            ->end();
+
+        $children
+            ->enumNode('preset')
+            ->info('The minification preset to use')
+            ->defaultValue('base')
+            ->values([
+                'none',
+                'fast',
+                'base',
+                'size',
+            ])
+            ->end();
+
+        $children = $root
+            ->beforeNormalization()
+                ->ifArray()
+                ->then(function (array $v): array {
+                    if (isset($v['compression'])) {
+                        if (!isset($v['minify'])) {
+                            $v['minify'] = [];
+                        }
+
+                        // Map the legacy 'force' option if not explicitly defined in 'minify'
+                        if (isset($v['compression']['force']) && !isset($v['minify']['force'])) {
+                            $v['minify']['force'] = $v['compression']['force'];
+                        }
+
+                        // Map the legacy 'level' setting to the new 'preset' option
+                        if (isset($v['compression']['level']) && !isset($v['minify']['preset'])) {
+                            $levelToPresetMap = [
+                                'none' => 'none',
+                                'fastest' => 'fast',
+                                'normal' => 'base',
+                                'smallest' => 'size',
+                            ];
+
+                            $v['minify']['preset'] = $levelToPresetMap[$v['compression']['level']] ?? 'base';
+                        }
+                    }
+
+                    return $v;
+                })
+            ->end()
+            ->children()
                 ->arrayNode('compression')
+                    ->setDeprecated(
+                        'ocubom/twig-extra-bundle',
+                        '1.2',
+                        'The "%node%" option is deprecated. Use "html.minify" instead.'
+                    )
                     ->info('Compress HTML output')
                     ->addDefaultsIfNotSet()
                     ->children();
@@ -128,7 +187,7 @@ class Configuration implements ConfigurationInterface
         $children
             ->enumNode('level')
                 ->info('The level of compression to use')
-                ->defaultValue('smallest')
+                ->defaultValue('normal')
                 ->values([
                     'none',
                     'fastest',

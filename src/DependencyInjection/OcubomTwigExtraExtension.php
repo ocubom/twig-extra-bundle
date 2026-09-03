@@ -12,8 +12,8 @@
 namespace Ocubom\TwigExtraBundle\DependencyInjection;
 
 use Ocubom\Twig\Extension\HtmlAttributesRuntime;
-use Ocubom\Twig\Extension\HtmlCompressRuntime;
 use Ocubom\Twig\Extension\HtmlExtension;
+use Ocubom\Twig\Extension\HtmlMinifyRuntime;
 use Ocubom\Twig\Extension\Svg\Finder;
 use Ocubom\Twig\Extension\Svg\FinderInterface;
 use Ocubom\Twig\Extension\Svg\Library\FontAwesome\Finder as FontAwesomeFinder;
@@ -81,12 +81,20 @@ class OcubomTwigExtraExtension extends Extension
         $container->register('ocubom_twig_extra.twig_html_attributes_runtime', HtmlAttributesRuntime::class)
             ->addTag('twig.runtime');
 
-        $container->register('ocubom_twig_extra.twig_html_compress_runtime', HtmlCompressRuntime::class)
+        $container->register('ocubom_twig_extra.twig_html_minify_runtime', HtmlMinifyRuntime::class)
             ->setArguments([
-                $config['compression']['force'],
-                $config['compression']['level'],
+                $config['minify']['force'],
+                $config['minify']['preset'],
             ])
             ->addTag('twig.runtime');
+
+        // Alias for the deprecated service
+        $container->setAlias('ocubom_twig_extra.twig_html_compress_runtime', 'ocubom_twig_extra.twig_html_minify_runtime')
+            ->setDeprecated(
+                'ocubom/twig-extra-bundle',
+                '1.2',
+                'The "%alias_id%" service is deprecated. Use "ocubom_twig_extra.twig_html_minify_runtime" instead.'
+            );
     }
 
     /** @psalm-suppress UndefinedClass */
