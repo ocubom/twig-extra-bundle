@@ -77,12 +77,15 @@ jobs:
             -   name: Setup ocubom/twig-svg-extension version
                 if: ${{ matrix.twig-svg-extension }}
                 shell: bash
+                env:
+                    COMPOSER_NO_BLOCKING: 1
                 run: composer require --ansi --no-interaction --no-plugins --no-scripts --dev --no-update ocubom/twig-svg-extension:^${{ matrix.twig-svg-extension }}
 
             -   name: Composer install
                 uses: ramsey/composer-install@v4
                 env:
                     SYMFONY_REQUIRE: ${{ matrix.symfony || '' }}
+                    COMPOSER_NO_BLOCKING: 1
                 with:
                     composer-options: ${{ matrix.composer-options }}
                     dependency-versions: ${{ matrix.dependencies }}
