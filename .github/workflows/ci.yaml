@@ -15,7 +15,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             -   name: Checkout
-                uses: actions/checkout@v6
+                uses: actions/checkout@v7
 
             -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
@@ -33,27 +33,16 @@ jobs:
             -   name: PHPStan
                 run: vendor/bin/phpstan analyse --error-format=github
 
-    matrix:
-        runs-on: ubuntu-latest
-        outputs:
-            matrix: ${{ steps.generate.outputs.matrix }}
-        steps:
-            -   name: Checkout
-                uses: actions/checkout@v6
-
-            -   name: Generate matrix
-                id: generate
-                run: |
-                    echo "matrix=$(php .github/matrix.php | jq -c .)" >> $GITHUB_OUTPUT
-
     test:
         needs: matrix
-        name: Test PHP ${{ matrix.php }} on ${{ matrix.os }}${{ matrix.coverage && '*' || '' }} (Symfony ${{ matrix.symfony }})
+        name: PHP ${{ matrix.php }} on ${{ matrix.os }}${{ matrix.coverage && '*' || '' }} (Symfony ${{ matrix.symfony }})
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
             matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
-
+        env:
+            OS: ${{ matrix.os }}
+            PHP: ${{ matrix.php }}
         steps:
             -   name: Configure git to avoid issues with line endings
                 if: ${{ runner.os == 'Windows' }}
@@ -62,12 +51,10 @@ jobs:
             -   name: Configure GNU tar on windows
                 if: ${{ runner.os == 'Windows' }}
                 shell: cmd
-                run: |
-                    echo "Adding GNU tar to PATH"
-                    echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+                run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
 
             -   name: Checkout
-                uses: actions/checkout@v6
+                uses: actions/checkout@v7
                 with:
                     # @see RepositoryIntrospector at scrutinizer-ci/ocular GitHub repository
                     fetch-depth: ${{ matrix.coverage && 10 || 1 }}
@@ -77,7 +64,6 @@ jobs:
                 with:
                     php-version: ${{ matrix.php }}
                     ini-values: date.timezone=UTC, memory_limit=-1, max_execution_time=-1
-                    tools: phpunit-bridge
                     coverage: ${{ matrix.coverage || 'none' }}
 
             -   name: Setup Symfony version
@@ -91,22 +77,44 @@ jobs:
             -   name: Setup ocubom/twig-svg-extension version
                 if: ${{ matrix.twig-svg-extension }}
                 shell: bash
-                run: |
-                    composer require --ansi --no-interaction --no-plugins --no-scripts --dev --no-update ocubom/twig-svg-extension:^${{ matrix.twig-svg-extension }}
+                run: composer require --ansi --no-interaction --no-plugins --no-scripts --dev --no-update ocubom/twig-svg-extension:^${{ matrix.twig-svg-extension }}
 
             -   name: Composer install
                 uses: ramsey/composer-install@v4
                 env:
-                    SYMFONY_REQUIRE: ${{ matrix.symfony && matrix.symfony || '' }}
+                    SYMFONY_REQUIRE: ${{ matrix.symfony || '' }}
                 with:
                     composer-options: ${{ matrix.composer-options }}
                     dependency-versions: ${{ matrix.dependencies }}
 
             -   name: Run test suite
-                run: simple-phpunit ${{ matrix.coverage && ' --coverage-clover=coverage.xml ' || '' }}
+                run: vendor/bin/simple-phpunit --log-junit junit.xml ${{ matrix.coverage && ' --coverage-clover=coverage.xml ' || '' }}
 
-            -   name: Upload coverage to Scrutinizer
+            -   name: Upload coverage to Codecov
                 if: ${{ matrix.coverage }}
-                uses: sudo-bot/action-scrutinizer@latest
+                uses: codecov/codecov-action@v7
                 with:
-                    cli-args: "--format=php-clover coverage.xml --revision=${{ github.event.pull_request.head.sha || github.sha }}"
+                    token: ${{ secrets.CODECOV_TOKEN }}
+                    env_vars: OS,PHP,MINIFIER
+
+            -   name: Upload test results to Codecov
+                if: ${{ !cancelled() }}
+                uses: codecov/codecov-action@v7
+                with:
+                    token: ${{ secrets.CODECOV_TOKEN }}
+                    env_vars: OS,PHP,MINIFIER
+                    files: ./junit.xml
+                    report_type: test_results
+
+    matrix:
+        runs-on: ubuntu-latest
+        outputs:
+            matrix: ${{ steps.generate.outputs.matrix }}
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v7
+
+            -   name: Generate matrix
+                id: generate
+                run: |
+                    echo "matrix=$(php .github/matrix.php | jq -c .)" >> $GITHUB_OUTPUT
